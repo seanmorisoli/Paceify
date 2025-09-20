@@ -4,23 +4,40 @@ import PlaylistCard from '../components/PlaylistCard';
 
 /**
  * Dashboard Component
- * Main page that displays track filtering interface and results
- * Shows input controls for BPM/cadence filtering and displays matching tracks
+ * Main interface for finding songs that match your running pace
+ * Features:
+ * - Filter by running pace (minutes/mile) or direct BPM input
+ * - Adjustable tolerance range for BPM matching
+ * - Real-time track filtering with API integration
+ * - Playlist creation from filtered tracks
+ * - Dynamic display of matching songs with their properties
+ * - Automatic BPM/pace conversion
  */
 const Dashboard = () => {
-	const [tracks, setTracks] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
-	const [cadence, setCadence] = useState(168); // Default to 10:30 pace
-	const [tolerance, setTolerance] = useState(10); // Match backend default
-  const [paceMinutes, setPaceMinutes] = useState(10);
-  const [paceSeconds, setPaceSeconds] = useState(30);
-  const [filterMode, setFilterMode] = useState('pace'); // 'pace' or 'bpm'
-  const [apiResponse, setApiResponse] = useState(null);
-  const [creatingPlaylist, setCreatingPlaylist] = useState(false);
-  const [createdPlaylist, setCreatedPlaylist] = useState(null);
+  // Core state for track management
+  const [tracks, setTracks] = useState([]); // Stores filtered track results
+  const [loading, setLoading] = useState(false); // Controls loading states
+  const [error, setError] = useState(null); // Stores error messages
+  
+  // Running pace and BPM settings
+  const [cadence, setCadence] = useState(168); // Default to 10:30 pace (168 BPM)
+  const [tolerance, setTolerance] = useState(10); // Match backend default tolerance
+  // Pace input controls (minutes:seconds per mile)
+  const [paceMinutes, setPaceMinutes] = useState(10); // Minutes portion of pace
+  const [paceSeconds, setPaceSeconds] = useState(30); // Seconds portion of pace
+  const [filterMode, setFilterMode] = useState('pace'); // Toggle between 'pace' or 'bpm' input modes
+  
+  // API and playlist management
+  const [apiResponse, setApiResponse] = useState(null); // Stores the complete API response
+  const [creatingPlaylist, setCreatingPlaylist] = useState(false); // Controls playlist creation state
+  const [createdPlaylist, setCreatedPlaylist] = useState(null); // Stores created playlist details
 
-  // API call to filter tracks
+  /**
+   * Filters tracks based on either pace or BPM criteria
+   * Makes API call to backend service to get matching tracks
+   * Handles both pace-based (min:sec per mile) and direct BPM filtering
+   * Updates the tracks list and stores full API response
+   */
   const filterTracks = async () => {
     console.log('filterTracks called with:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     
@@ -78,7 +95,13 @@ const Dashboard = () => {
     }
   };
 
-  // Create a new playlist with filtered tracks
+  /**
+   * Creates a new Spotify playlist from the filtered tracks
+   * - Generates a descriptive name based on pace/BPM
+   * - Includes all currently filtered tracks
+   * - Sets playlist to private by default
+   * - Updates UI with creation status and success message
+   */
   const createPlaylist = async () => {
     if (!tracks || tracks.length === 0) {
       setError('No tracks available to create playlist');
@@ -128,7 +151,12 @@ const Dashboard = () => {
     }
   };
 
-  // Auto-filter when inputs change
+  /**
+   * Automatically triggers track filtering when any filter criteria changes
+   * - Debounces API calls by 500ms to prevent excessive requests
+   * - Watches for changes in filterMode, pace settings, cadence, and tolerance
+   * - Cleans up timeout on component unmount or criteria change
+   */
   useEffect(() => {
     console.log('Dashboard useEffect triggered:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     const timeoutId = setTimeout(() => {
