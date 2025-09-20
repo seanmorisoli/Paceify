@@ -10,9 +10,9 @@ const PlaylistCard = ({ track }) => {
 
   return (
     <div style={{
-      backgroundColor: '#fff',
+      backgroundColor: '#4A4A4A',
       borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      boxShadow: '0 2px 4px rgba(255, 255, 255, 0.17)',
       padding: '1rem',
       width: '300px',
       margin: '0.5rem'

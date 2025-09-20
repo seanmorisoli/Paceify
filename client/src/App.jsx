@@ -1,25 +1,23 @@
-import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import Login from './pages/Login.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+// client/src/App.jsx
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-const App = () => {
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+
+export default function App() {
   return (
-    <div>
-      {/* Simple nav bar for testing */}
-      <nav style={{ padding: '1rem', borderBottom: '1px solid #ccc' }}>
-        <Link to="/login" style={{ marginRight: '1rem' }}>Login</Link>
-        <Link to="/dashboard">Dashboard</Link>
-      </nav>
+    <Routes>
+      {/* Default route → Login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        {/* fallback route */}
-        <Route path="*" element={<Login />} />
-      </Routes>
-    </div>
+      {/* Login page */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Dashboard page */}
+      <Route path="/dashboard" element={<Dashboard />} />
+
+      {/* Catch-all → go back to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
-};
-
-export default App;
+}

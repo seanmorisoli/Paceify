@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -34,13 +33,14 @@ const Login = () => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#1DB954', // Spotify green
+      background: 'linear-gradient(45deg, #1DB954 30%, #191414 90%)', // Spotify green to black gradient
       color: 'white',
     }}>
       <h1 style={{ 
-        fontSize: '2.5rem', 
+        fontSize: '3.5rem', 
         marginBottom: '2rem',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
       }}>
         Paceify
       </h1>
@@ -50,7 +50,7 @@ const Login = () => {
         style={{
           backgroundColor: '#191414', // Spotify black
           color: 'white',
-          border: 'none',
+          border: '2px solid white',
           borderRadius: '25px',
           padding: '15px 30px',
           fontSize: '1.1rem',
@@ -59,10 +59,16 @@ const Login = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          transition: 'transform 0.2s ease',
-          ':hover': {
-            transform: 'scale(1.05)'
-          }
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 6px 8px rgba(0,0,0,0.2)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
         }}
       >
         <img 
@@ -70,30 +76,19 @@ const Login = () => {
           alt="Spotify"
           style={{ height: '24px', marginRight: '8px' }}
         />
-        Login with Spotify
+        Connect with Spotify
       </button>
 
-      <p style={{ marginTop: '2rem', fontSize: '0.9rem' }}>
-        Connect your Spotify account to get started
+      <p style={{ 
+        marginTop: '2rem', 
+        fontSize: '1rem',
+        opacity: '0.9',
+        textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
+      }}>
+        Transform your playlists with the power of AI
       </p>
-=======
-// client/src/pages/Login.jsx
-import { useNavigate } from 'react-router-dom';
-
-export default function Login() {
-  const navigate = useNavigate();
-
-  function handleLogin() {
-    // Later: call backend /auth/login
-    // For now: simulate success
-    navigate('/dashboard');
-  }
-
-  return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1>Login Page</h1>
-      <button onClick={handleLogin}>Log in with Spotify</button>
->>>>>>> 1d3f8fb5529177949f4e4c755b7dc4f2e30c7f1e
     </div>
   );
-}
+};
+
+export default Login;
