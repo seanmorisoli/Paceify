@@ -65,64 +65,70 @@ const mockTracks = [
   }
 ];
 
-// POST /filter - Filter tracks by running cadence (BPM)
-router.post('/filter', async (req, res) => {
-  try {
-    const { playlistId, targetCadence, tolerance = 5 } = req.body;
+// POST /create - Create a new playlist with filtered tracks// GET /filter/test - Test endpoint to verify service is working
+// POST /create - Create a new playlist with filtered tracks
+router.post('/create', async (req, res) => {
+  try {
+    const { name, description, tracks, public: isPublic = false } = req.body;
 
-    // Validate input
-    if (!targetCadence || typeof targetCadence !== 'number') {
-      return res.status(400).json({ 
-        error: 'targetCadence is required and must be a number' 
-      });
-    }
+    // Validate input
+    if (!name || !tracks || !Array.isArray(tracks)) {
+      return res.status(400).json({
+        error: 'Name and tracks array are required',
+        example: {
+          name: 'My Running Playlist',
+          description: 'Perfect for 10:30 pace runs',
+          tracks: ['track1', 'track2'],
+          public: false
+        }
+      });
+    }
 
-    console.log(`Filtering tracks for cadence: ${targetCadence} ± ${tolerance} BPM`);
+    console.log(`Creating playlist: "${name}" with ${tracks.length} tracks`);
 
-    // Calculate BPM range
-    const minBPM = targetCadence - tolerance;
-    const maxBPM = targetCadence + tolerance;
+    // In real implementation, this would:
+    // 1. Use Spotify API to create playlist: POST https://api.spotify.com/v1/users/{user_id}/playlists
+    // 2. Add tracks to playlist: POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks
+    
+    // Mock successful playlist creation
+    const mockPlaylist = {
+      id: `playlist_${Date.now()}`,
+      name,
+      description,
+      tracks: tracks.map(trackId => {
+        const foundTrack = mockTracks.find(t => t.id === trackId);
+        return foundTrack ? {
+          id: foundTrack.id,
+          name: foundTrack.name,
+          artists: foundTrack.artists.map(a => a.name).join(', ')
+        } : { id: trackId, name: 'Unknown Track' };
+      }),
+      public: isPublic,
+      created_at: new Date().toISOString(),
+      spotify_url: `https://open.spotify.com/playlist/mock_${Date.now()}`, // Mock URL
+      total_tracks: tracks.length
+    };
 
-    // Filter mock tracks by BPM (in real implementation, this would fetch from Spotify)
-    const filteredTracks = mockTracks.filter(track => {
-      const bpm = track.audio_features.tempo;
-      return bpm >= minBPM && bpm <= maxBPM;
-    });
+    console.log('Mock playlist created:', mockPlaylist.id);
 
-    // Format response with relevant info for frontend
-    const formattedTracks = filteredTracks.map(track => ({
-      id: track.id,
-      name: track.name,
-      artists: track.artists.map(artist => artist.name).join(', '),
-      album: track.album.name,
-      duration_ms: track.duration_ms,
-      bpm: Math.round(track.audio_features.tempo * 10) / 10, // Round to 1 decimal
-      energy: track.audio_features.energy,
-      danceability: track.audio_features.danceability
-    }));
+    res.json({
+      success: true,
+      message: 'Playlist created successfully',
+      playlist: mockPlaylist
+    });
 
-    res.json({
-      targetCadence,
-      tolerance,
-      bpmRange: `${minBPM}-${maxBPM}`,
-      totalTracks: mockTracks.length,
-      filteredCount: formattedTracks.length,
-      tracks: formattedTracks
-    });
-
-  } catch (error) {
-    console.error('Error filtering tracks:', error);
-    res.status(500).json({ error: 'Failed to filter tracks' });
-  }
+  } catch (error) {
+    console.error('Error creating playlist:', error);
+    res.status(500).json({ error: 'Failed to create playlist' });
+  }
 });
 
-// GET /filter/test - Test endpoint to verify service is working
 router.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Filter service is working!',
-    mockTracksCount: mockTracks.length,
-    sampleTrack: mockTracks[0]
-  });
+  res.json({ 
+    message: 'Playlist service is working!',
+    mockTracksCount: mockTracks.length,
+    sampleTrack: mockTracks[0]
+  });
 });
 
 module.exports = router;
