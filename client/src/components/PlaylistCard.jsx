@@ -16,7 +16,7 @@ const PlaylistCard = ({ track }) => {
   return (
     // Main card container - Charcoal grey background with white border
     <div style={{
-      background: '#4A4A4A',
+      background: '#ffffffff',
       borderRadius: '25px',
       padding: '1.5rem',
       color: '#FFFFFF',
