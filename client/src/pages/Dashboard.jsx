@@ -44,7 +44,7 @@ const Dashboard = () => {
 
       console.log('Filtering with payload:', payload);
 
-      const response = await fetch('http://localhost:3000/filter/filter', {
+      const response = await fetch('/api/filter/filter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const Dashboard = () => {
 
       console.log('Creating playlist with payload:', payload);
 
-      const response = await fetch('http://localhost:3000/playlists/create', {
+      const response = await fetch('/api/playlists/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
