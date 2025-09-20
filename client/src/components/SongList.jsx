@@ -23,7 +23,7 @@ const SongList = ({ tracks, targetCadence, isLoading }) => {
         <h3>No tracks found</h3>
         <p>
           {targetCadence 
-            ? `No tracks found matching ${targetCadence} BPM ± 5`
+            ? `No tracks found matching ${targetCadence} BPM ± 10`
             : 'Enter a target running cadence to find matching tracks'
           }
         </p>
@@ -34,18 +34,29 @@ const SongList = ({ tracks, targetCadence, isLoading }) => {
   return (
     <div className="song-list">
       <div className="song-list-header">
-        <h3>Filtered Tracks</h3>
+        <h3>
+          {tracks.some(track => track.isRecommended) 
+            ? 'Recommended Tracks' 
+            : 'Your Library - Filtered Tracks'
+          }
+        </h3>
         <p className="results-summary">
-          Found {tracks.length} tracks matching {targetCadence} BPM ± 5
+          {tracks.some(track => track.isRecommended) 
+            ? `Found ${tracks.length} recommended tracks matching ${targetCadence} BPM ± 10 (none found in your library)`
+            : `Found ${tracks.length} tracks matching ${targetCadence} BPM ± 10`
+          }
         </p>
       </div>
       
       <div className="tracks-container">
         {tracks.map((track) => (
-          <div key={track.id} className="track-item">
+          <div key={track.id} className={`track-item ${track.isRecommended ? 'recommended' : ''}`}>
             <div className="track-info">
               <div className="track-main">
-                <h4 className="track-name">{track.name}</h4>
+                <h4 className="track-name">
+                  {track.name}
+                  {track.isRecommended && <span className="rec-badge">RECOMMENDED</span>}
+                </h4>
                 <p className="track-artist">{track.artists}</p>
                 <p className="track-album">{track.album}</p>
               </div>

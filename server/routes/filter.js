@@ -65,10 +65,66 @@ const mockTracks = [
   }
 ];
 
+// Mock recommended tracks for when user's library doesn't have matches
+const mockRecommendedTracks = [
+  {
+    id: 'rec1',
+    name: 'Pump It',
+    artists: [{ name: 'The Black Eyed Peas' }],
+    album: { name: 'Monkey Business' },
+    duration_ms: 214000,
+    audio_features: {
+      tempo: 120.0,
+      energy: 0.9,
+      danceability: 0.8
+    },
+    isRecommended: true
+  },
+  {
+    id: 'rec2',
+    name: 'Can\'t Stop the Feeling!',
+    artists: [{ name: 'Justin Timberlake' }],
+    album: { name: 'Trolls (Original Motion Picture Soundtrack)' },
+    duration_ms: 236000,
+    audio_features: {
+      tempo: 113.0,
+      energy: 0.8,
+      danceability: 0.9
+    },
+    isRecommended: true
+  },
+  {
+    id: 'rec3',
+    name: 'Good 4 U',
+    artists: [{ name: 'Olivia Rodrigo' }],
+    album: { name: 'SOUR' },
+    duration_ms: 178000,
+    audio_features: {
+      tempo: 164.0,
+      energy: 0.9,
+      danceability: 0.6
+    },
+    isRecommended: true
+  },
+  {
+    id: 'rec4',
+    name: 'Levitating',
+    artists: [{ name: 'Dua Lipa' }],
+    album: { name: 'Future Nostalgia' },
+    duration_ms: 203000,
+    audio_features: {
+      tempo: 103.0,
+      energy: 0.8,
+      danceability: 0.8
+    },
+    isRecommended: true
+  }
+];
+
 // POST /filter - Filter tracks by running cadence (BPM)
 router.post('/filter', async (req, res) => {
   try {
-    const { playlistId, targetCadence, tolerance = 5 } = req.body;
+    const { playlistId, targetCadence, tolerance = 10 } = req.body;
 
     // Validate input
     if (!targetCadence || typeof targetCadence !== 'number') {
@@ -89,8 +145,24 @@ router.post('/filter', async (req, res) => {
       return bpm >= minBPM && bpm <= maxBPM;
     });
 
+    let finalTracks = filteredTracks;
+    let recommendationsAdded = 0;
+
+    // If no matches found, add recommendations
+    if (filteredTracks.length === 0) {
+      console.log('No tracks found in user library, adding recommendations...');
+      
+      const recommendedTracks = mockRecommendedTracks.filter(track => {
+        const bpm = track.audio_features.tempo;
+        return bpm >= minBPM && bpm <= maxBPM;
+      });
+      
+      finalTracks = recommendedTracks;
+      recommendationsAdded = recommendedTracks.length;
+    }
+
     // Format response with relevant info for frontend
-    const formattedTracks = filteredTracks.map(track => ({
+    const formattedTracks = finalTracks.map(track => ({
       id: track.id,
       name: track.name,
       artists: track.artists.map(artist => artist.name).join(', '),
@@ -98,7 +170,8 @@ router.post('/filter', async (req, res) => {
       duration_ms: track.duration_ms,
       bpm: Math.round(track.audio_features.tempo * 10) / 10, // Round to 1 decimal
       energy: track.audio_features.energy,
-      danceability: track.audio_features.danceability
+      danceability: track.audio_features.danceability,
+      isRecommended: track.isRecommended || false
     }));
 
     res.json({
@@ -106,7 +179,8 @@ router.post('/filter', async (req, res) => {
       tolerance,
       bpmRange: `${minBPM}-${maxBPM}`,
       totalTracks: mockTracks.length,
-      filteredCount: formattedTracks.length,
+      filteredCount: filteredTracks.length,
+      recommendationsAdded,
       tracks: formattedTracks
     });
 
