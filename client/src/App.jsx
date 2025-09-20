@@ -7,7 +7,7 @@ const App = () => {
   return (
     <div>
       {/* Simple nav bar for testing */}
-      <nav style={{ padding: '1rem', borderBottom: '1px solid #ccc' }}>
+      <nav style={{ padding: '1rem', borderBottom: '1px solid #272525ff' }}>
         <Link to="/login" style={{ marginRight: '1rem' }}>Login</Link>
         <Link to="/dashboard">Dashboard</Link>
       </nav>

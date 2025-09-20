@@ -38,8 +38,8 @@ const Dashboard = () => {
     setTracks(filteredTracks);
     setLoading(false);
   }, [cadence, tolerance]);	return (
-		<div style={{ padding: '2rem' }}>
-			<h1>Dashboard</h1>
+		<div style={{ padding: '2rem', backgroundColor: '#4A4A4A' }}>
+			<h1 style={{ color: '#fff', borderColor: '#000000ff' }}>Dashboard</h1>
 			<div style={{ marginBottom: '1rem' }}>
 				<label>
 					Target Cadence (BPM):
