@@ -121,23 +121,93 @@ const mockRecommendedTracks = [
   }
 ];
 
+// Function to convert running pace to cadence (BPM)
+// Uses actual running science: pace → speed → cadence based on stride length
+function paceToStepsPerMinute(paceMinutes, paceSeconds = 0, strideLengthFeet = null) {
+  // Convert pace to total seconds per mile
+  const totalSecondsPerMile = (paceMinutes * 60) + paceSeconds;
+  
+  // Convert to speed in miles per minute
+  const milesPerMinute = 1 / (totalSecondsPerMile / 60);
+  
+  // Convert to miles per hour for reference
+  const mph = milesPerMinute * 60;
+  
+  // Estimate stride length if not provided
+  // Calibrated to match real-world cadence expectations
+  // 10:30 pace (5.71 mph) should give ~165 BPM with ~3.05 ft stride
+  let estimatedStrideFeet;
+  if (!strideLengthFeet) {
+    if (mph >= 8.0) {
+      estimatedStrideFeet = 3.5; // Fast runner, longer stride
+    } else if (mph >= 6.5) {
+      estimatedStrideFeet = 3.2; // Moderate pace
+    } else if (mph >= 5.0) {
+      estimatedStrideFeet = 3.0; // Casual jogging (10:30 pace falls here)
+    } else {
+      estimatedStrideFeet = 2.8; // Walking/very slow
+    }
+  } else {
+    estimatedStrideFeet = strideLengthFeet;
+  }
+  
+  // Calculate cadence: speed × feet per mile ÷ stride length
+  const cadence = (milesPerMinute * 5280) / estimatedStrideFeet;
+  
+  // Round to nearest whole number and ensure reasonable range
+  const finalCadence = Math.round(Math.max(140, Math.min(200, cadence)));
+  
+  console.log(`Pace calculation: ${paceMinutes}:${paceSeconds.toString().padStart(2, '0')} → ${mph.toFixed(1)} mph → ${finalCadence} SPM (stride: ${estimatedStrideFeet}ft)`);
+  
+  return finalCadence;
+}
+
 // POST /filter - Filter tracks by running cadence (BPM)
 router.post('/filter', async (req, res) => {
   try {
-    const { playlistId, targetCadence, tolerance = 10 } = req.body;
+    const { 
+      playlistId, 
+      targetCadence, 
+      tolerance = 10,
+      // New pace input options
+      paceMinutes,
+      paceSeconds,
+      strideLengthFeet // Optional: user's stride length in feet
+    } = req.body;
 
-    // Validate input
-    if (!targetCadence || typeof targetCadence !== 'number') {
+    let finalCadence;
+
+    // Option 1: User provides pace (preferred)
+    if (paceMinutes !== undefined) {
+      const seconds = paceSeconds || 0;
+      finalCadence = paceToStepsPerMinute(paceMinutes, seconds, strideLengthFeet);
+    }
+    // Option 2: User provides BPM directly (fallback)
+    else if (targetCadence) {
+      finalCadence = targetCadence;
+      console.log(`Using direct BPM input: ${finalCadence}`);
+    }
+    // Option 3: No valid input
+    else {
       return res.status(400).json({ 
-        error: 'targetCadence is required and must be a number' 
+        error: 'Either pace (paceMinutes, paceSeconds) or targetCadence is required',
+        examples: {
+          paceExample: { 
+            paceMinutes: 10, 
+            paceSeconds: 30,
+            strideLengthFeet: 3.5 // optional
+          },
+          bpmExample: { targetCadence: 165 }
+        },
+        note: "Pace like 10:30 per mile gets converted to ~165 BPM based on estimated stride length"
       });
     }
 
-    console.log(`Filtering tracks for cadence: ${targetCadence} ± ${tolerance} BPM`);
+    console.log(`Filtering tracks for cadence: ${finalCadence} ± ${tolerance} BPM`);
 
     // Calculate BPM range
-    const minBPM = targetCadence - tolerance;
-    const maxBPM = targetCadence + tolerance;
+    const minBPM = finalCadence - tolerance;
+    const maxBPM = finalCadence + tolerance;
 
     // Filter mock tracks by BPM (in real implementation, this would fetch from Spotify)
     const filteredTracks = mockTracks.filter(track => {
@@ -175,7 +245,8 @@ router.post('/filter', async (req, res) => {
     }));
 
     res.json({
-      targetCadence,
+      targetCadence: finalCadence,
+      originalPace: paceMinutes ? `${paceMinutes}:${(paceSeconds || 0).toString().padStart(2, '0')}` : null,
       tolerance,
       bpmRange: `${minBPM}-${maxBPM}`,
       totalTracks: mockTracks.length,
@@ -196,6 +267,32 @@ router.get('/test', (req, res) => {
     message: 'Filter service is working!',
     mockTracksCount: mockTracks.length,
     sampleTrack: mockTracks[0]
+  });
+});
+
+// GET /filter/pace-table - Show pace to BPM conversion examples
+router.get('/pace-table', (req, res) => {
+  const commonPaces = [
+    { pace: "6:00", minutes: 6, seconds: 0 },
+    { pace: "7:00", minutes: 7, seconds: 0 },
+    { pace: "8:00", minutes: 8, seconds: 0 },
+    { pace: "9:00", minutes: 9, seconds: 0 },
+    { pace: "10:00", minutes: 10, seconds: 0 },
+    { pace: "10:30", minutes: 10, seconds: 30 },
+    { pace: "11:00", minutes: 11, seconds: 0 },
+    { pace: "12:00", minutes: 12, seconds: 0 }
+  ];
+
+  const conversions = commonPaces.map(p => ({
+    pace: p.pace + " per mile",
+    estimatedBPM: paceToStepsPerMinute(p.minutes, p.seconds),
+    mph: ((1 / ((p.minutes * 60 + p.seconds) / 60)) * 60).toFixed(1)
+  }));
+
+  res.json({
+    message: "Pace to BPM conversion table",
+    note: "BPM estimates based on average stride length. Actual cadence varies by individual.",
+    conversions
   });
 });
 
