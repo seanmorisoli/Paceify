@@ -411,7 +411,18 @@ const Dashboard = () => {
                 <input
                   type="number"
                   value={tolerance}
-                  onChange={e => setTolerance(Number(e.target.value))}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setTolerance('');
+                    } else {
+                      const numVal = Number(val);
+                      // Allow reasonable tolerance values for typing
+                      if (numVal >= 0 && numVal <= 99) {
+                        setTolerance(numVal);
+                      }
+                    }
+                  }}
                   min="1"
                   max="30"
                   style={{
