@@ -85,7 +85,7 @@ const Login = () => {
         opacity: '0.9',
         textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
       }}>
-        Transform your playlists with the power of AI
+        Transform your playlists with music that moves you.
       </p>
     </div>
   );
