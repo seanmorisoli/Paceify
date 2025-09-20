@@ -42,7 +42,7 @@ const Dashboard = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #64B5F6 0%, #1E88E5 100%)',
+      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
       padding: '2rem',
       color: '#FFFFFF'
     }}>
@@ -50,27 +50,29 @@ const Dashboard = () => {
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '2rem',
-        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-        borderRadius: '15px',
-        backdropFilter: 'blur(10px)'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}>
         <h1 style={{
-          fontSize: '2.5rem',
+          fontSize: '3.5rem',
           marginBottom: '2rem',
           textAlign: 'center',
           color: '#FFFFFF',
-          textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
           fontWeight: 'bold'
         }}>
-          Paceify Dashboard
+          Dashboard
         </h1>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.2)',
+          background: '#191414',
           padding: '1.5rem',
-          borderRadius: '10px',
+          borderRadius: '25px',
           marginBottom: '2rem',
-          border: '2px solid rgba(0, 0, 0, 0.1)'
+          border: '2px solid white',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          width: 'fit-content'
         }}>
           <div style={{
             display: 'flex',
@@ -92,11 +94,14 @@ const Dashboard = () => {
                   style={{
                     marginLeft: '0.5rem',
                     width: '5rem',
-                    padding: '0.5rem',
-                    borderRadius: '5px',
-                    border: '1px solid #000000ff',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem'
+                    padding: '8px 15px',
+                    borderRadius: '25px',
+                    border: '2px solid white',
+                    background: '#191414',
+                    fontSize: '1.1rem',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 />
               </label>
@@ -129,8 +134,14 @@ const Dashboard = () => {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <p style={{ fontSize: '1.2rem' }}>Loading tracks...</p>
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '2rem',
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
+          }}>
+            Loading tracks...
           </div>
         ) : error ? (
           <div style={{ 

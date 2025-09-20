@@ -10,14 +10,14 @@ const PlaylistCard = ({ track }) => {
 
   return (
     <div style={{
-      background: 'rgba(255, 255, 255, 0.25)',
-      backdropFilter: 'blur(10px)',
-      borderRadius: '12px',
+      background: '#191414',
+      borderRadius: '25px',
       padding: '1.5rem',
       color: '#FFFFFF',
-      transition: 'transform 0.2s, box-shadow 0.2s',
+      transition: 'all 0.3s ease',
       cursor: 'pointer',
-      border: '2px solid rgba(0, 0, 0, 0.2)',
+      border: '2px solid white',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
       ':hover': {
         transform: 'translateY(-2px)',
