@@ -1,12 +1,19 @@
-import React from 'react';
+// client/src/pages/Login.jsx
+import { useNavigate } from 'react-router-dom';
 
-const Login = () => {
+export default function Login() {
+  const navigate = useNavigate();
+
+  function handleLogin() {
+    // Later: call backend /auth/login
+    // For now: simulate success
+    navigate('/dashboard');
+  }
+
   return (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
       <h1>Login Page</h1>
-      <p>Spotify login button will go here.</p>
+      <button onClick={handleLogin}>Log in with Spotify</button>
     </div>
   );
-};
-
-export default Login;
+}
