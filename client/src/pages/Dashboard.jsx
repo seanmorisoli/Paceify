@@ -22,9 +22,18 @@ const Dashboard = () => {
 
   // API call to filter tracks
   const filterTracks = async () => {
-    if (filterMode === 'pace' && (!paceMinutes || paceMinutes < 1)) return;
-    if (filterMode === 'bpm' && (!cadence || cadence < 1)) return;
+    console.log('filterTracks called with:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
+    
+    if (filterMode === 'pace' && (!paceMinutes || paceMinutes < 1)) {
+      console.log('Skipping API call - invalid pace minutes:', paceMinutes);
+      return;
+    }
+    if (filterMode === 'bpm' && (!cadence || cadence < 1)) {
+      console.log('Skipping API call - invalid cadence:', cadence);
+      return;
+    }
 
+    console.log('Making API call...');
     setLoading(true);
     setError(null);
 
@@ -49,9 +58,11 @@ const Dashboard = () => {
 
       const data = await response.json();
       console.log('Filter response:', data);
+      console.log('Setting tracks to:', data.tracks);
       
       setApiResponse(data);
       setTracks(data.tracks || []);
+      console.log('Tracks state should now be:', data.tracks || []);
       
       // Update cadence display if using pace mode
       if (filterMode === 'pace' && data.targetCadence) {
@@ -119,7 +130,9 @@ const Dashboard = () => {
 
   // Auto-filter when inputs change
   useEffect(() => {
+    console.log('Dashboard useEffect triggered:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     const timeoutId = setTimeout(() => {
+      console.log('About to call filterTracks...');
       filterTracks();
     }, 500); // Debounce API calls
 
