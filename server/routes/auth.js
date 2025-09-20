@@ -13,17 +13,35 @@ const redirectURI = process.env.SPOTIFY_REDIRECT_URI || "http://localhost:3000/a
 //  /login → Redirects to Spotify
 // -------------------
 router.get("/login", (req, res) => {
-  const scope = "user-read-email user-read-private"; // ask for more scopes if needed
-  const authURL =
-    "https://accounts.spotify.com/authorize?" +
-    querystring.stringify({
-      response_type: "code",
-      client_id: clientID,
-      scope: scope,
-      redirect_uri: redirectURI,
+  // Check if we have the required credentials
+  if (!clientID || !clientSecret) {
+    console.error('Missing Spotify credentials. Please check your .env file');
+    return res.status(500).json({ 
+      error: "Server configuration error",
+      details: "Missing Spotify credentials"
     });
+  }
 
-  res.redirect(authURL);
+  const scope = "user-read-email user-read-private playlist-read-private playlist-modify-public playlist-modify-private";
+  
+  try {
+    const authURL =
+      "https://accounts.spotify.com/authorize?" +
+      querystring.stringify({
+        response_type: "code",
+        client_id: clientID,
+        scope: scope,
+        redirect_uri: redirectURI,
+      });
+
+    res.redirect(authURL);
+  } catch (error) {
+    console.error('Error creating auth URL:', error);
+    res.status(500).json({ 
+      error: "Failed to create authorization URL",
+      details: error.message
+    });
+  }
 });
 
 // -------------------
