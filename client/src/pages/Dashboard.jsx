@@ -42,7 +42,7 @@ const Dashboard = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
+      background: 'linear-gradient(135deg, #84c5faff 0%, #3595e9ff 100%)',
       padding: '2rem',
       color: '#FFFFFF'
     }}>
@@ -66,7 +66,7 @@ const Dashboard = () => {
         </h1>
 
         <div style={{
-          background: '#191414',
+          background: '#b8b3b3ff',
           padding: '1.5rem',
           borderRadius: '25px',
           marginBottom: '2rem',
