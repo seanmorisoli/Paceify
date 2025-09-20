@@ -32,6 +32,37 @@ const Dashboard = () => {
   const [creatingPlaylist, setCreatingPlaylist] = useState(false); // Controls playlist creation state
   const [createdPlaylist, setCreatedPlaylist] = useState(null); // Stores created playlist details
 
+  // Function to calculate BPM from pace in real-time (frontend only)
+  const calculateBPMFromPace = (minutes, seconds) => {
+    if (!minutes || minutes < 1 || !seconds === undefined) return 168; // Default fallback
+    
+    // Convert pace to total seconds per mile
+    const totalSecondsPerMile = (minutes * 60) + (seconds || 0);
+    
+    // Convert to speed in miles per minute
+    const milesPerMinute = 1 / (totalSecondsPerMile / 60);
+    
+    // Convert to mph for stride length estimation
+    const mph = milesPerMinute * 60;
+    
+    // Estimate stride length based on speed
+    let estimatedStrideFeet;
+    if (mph >= 8.0) {
+      estimatedStrideFeet = 3.5; // Fast runner
+    } else if (mph >= 6.5) {
+      estimatedStrideFeet = 3.2; // Moderate pace  
+    } else if (mph >= 5.0) {
+      estimatedStrideFeet = 3.0; // Casual jogging
+    } else {
+      estimatedStrideFeet = 2.8; // Walking/very slow
+    }
+    
+    // Calculate cadence: speed × feet per mile / stride length
+    const cadenceCalc = (milesPerMinute * 5280) / estimatedStrideFeet;
+    
+    return Math.round(cadenceCalc);
+  };
+
   /**
    * Filters tracks based on either pace or BPM criteria
    * Makes API call to backend service to get matching tracks
@@ -41,10 +72,10 @@ const Dashboard = () => {
   const filterTracks = async () => {
     console.log('filterTracks called with:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     
-    if (filterMode === 'pace' && (!paceMinutes || paceMinutes < 1)) {
-      console.log('Skipping API call - invalid pace minutes:', paceMinutes);
-      return;
-    }
+    if (filterMode === 'pace' && (!paceMinutes || paceMinutes < 1 || paceMinutes === '')) {
+        console.log('Skipping API call - invalid pace minutes:', paceMinutes);
+        return;
+      }
     if (filterMode === 'bpm' && (!cadence || cadence < 1)) {
       console.log('Skipping API call - invalid cadence:', cadence);
       return;
@@ -249,7 +280,10 @@ const Dashboard = () => {
                     <input
                       type="number"
                       value={paceMinutes}
-                      onChange={e => setPaceMinutes(Number(e.target.value))}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setPaceMinutes(val === '' ? '' : Number(val));
+                      }}
                       min="4"
                       max="20"
                       style={{
@@ -268,7 +302,10 @@ const Dashboard = () => {
                     <input
                       type="number"
                       value={paceSeconds}
-                      onChange={e => setPaceSeconds(Number(e.target.value))}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setPaceSeconds(val === '' ? '' : Number(val));
+                      }}
                       min="0"
                       max="59"
                       style={{
@@ -290,9 +327,9 @@ const Dashboard = () => {
                   color: '#333',
                   textAlign: 'center'
                 }}>
-                  <div>≈ {cadence} BPM</div>
+                  <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
                   <div style={{ fontSize: '0.8rem' }}>
-                    ({paceMinutes}:{paceSeconds.toString().padStart(2, '0')}/mile)
+                    ({paceMinutes}:{(paceSeconds || 0).toString().padStart(2, '0')}/mile)
                   </div>
                 </div>
               </div>
