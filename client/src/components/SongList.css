@@ -50,6 +50,11 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.track-item.recommended {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
+  border-left: 4px solid #1db954;
+}
+
 .track-info {
   flex: 1;
   display: flex;
@@ -65,6 +70,19 @@
   margin: 0 0 5px 0;
   font-size: 1.1rem;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rec-badge {
+  background: #1db954;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
 .track-artist {
