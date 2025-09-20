@@ -1,12 +1,13 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
-    proxy: {
-      '/api': 'http://localhost:3000',
-    },
+    allowedHosts: [
+      'c1f97552bcc0.ngrok-free.app', // your ngrok domain
+    ],
+    port: 8080, // if you want to force 8080
   },
-});
+})
