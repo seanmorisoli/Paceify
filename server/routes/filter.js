@@ -122,7 +122,7 @@ const mockRecommendedTracks = [
 ];
 
 // Function to convert running pace to cadence (BPM)
-// Uses actual running science: pace → speed → cadence based on stride length
+// Uses actual running science: pace -> speed -> cadence based on stride length
 function paceToStepsPerMinute(paceMinutes, paceSeconds = 0, strideLengthFeet = null) {
   // Convert pace to total seconds per mile
   const totalSecondsPerMile = (paceMinutes * 60) + paceSeconds;
@@ -134,8 +134,6 @@ function paceToStepsPerMinute(paceMinutes, paceSeconds = 0, strideLengthFeet = n
   const mph = milesPerMinute * 60;
   
   // Estimate stride length if not provided
-  // Calibrated to match real-world cadence expectations
-  // 10:30 pace (5.71 mph) should give ~165 BPM with ~3.05 ft stride
   let estimatedStrideFeet;
   if (!strideLengthFeet) {
     if (mph >= 8.0) {
@@ -151,11 +149,11 @@ function paceToStepsPerMinute(paceMinutes, paceSeconds = 0, strideLengthFeet = n
     estimatedStrideFeet = strideLengthFeet;
   }
   
-  // Calculate cadence: speed × feet per mile ÷ stride length
+  // Calculate cadence: speed × feet per mile / stride length
   const cadence = (milesPerMinute * 5280) / estimatedStrideFeet;
   
-  // Round to nearest whole number and ensure reasonable range
-  const finalCadence = Math.round(Math.max(140, Math.min(200, cadence)));
+  // Round to nearest whole number
+  const finalCadence = Math.round(cadence);
   
   console.log(`Pace calculation: ${paceMinutes}:${paceSeconds.toString().padStart(2, '0')} → ${mph.toFixed(1)} mph → ${finalCadence} SPM (stride: ${estimatedStrideFeet}ft)`);
   
@@ -172,7 +170,7 @@ router.post('/filter', async (req, res) => {
       // New pace input options
       paceMinutes,
       paceSeconds,
-      strideLengthFeet // Optional: user's stride length in feet
+      strideLengthFeet // User's stride length in feet
     } = req.body;
 
     let finalCadence;
