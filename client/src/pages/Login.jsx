@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -75,8 +76,24 @@ const Login = () => {
       <p style={{ marginTop: '2rem', fontSize: '0.9rem' }}>
         Connect your Spotify account to get started
       </p>
+=======
+// client/src/pages/Login.jsx
+import { useNavigate } from 'react-router-dom';
+
+export default function Login() {
+  const navigate = useNavigate();
+
+  function handleLogin() {
+    // Later: call backend /auth/login
+    // For now: simulate success
+    navigate('/dashboard');
+  }
+
+  return (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <h1>Login Page</h1>
+      <button onClick={handleLogin}>Log in with Spotify</button>
+>>>>>>> 1d3f8fb5529177949f4e4c755b7dc4f2e30c7f1e
     </div>
   );
-};
-
-export default Login;
+}
