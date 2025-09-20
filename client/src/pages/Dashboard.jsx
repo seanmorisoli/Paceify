@@ -284,6 +284,16 @@ const Dashboard = () => {
                     }}
                   />
                 </label>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: '#333',
+                  textAlign: 'center'
+                }}>
+                  <div>≈ {Math.floor(180/cadence)}:{String(Math.round((180/cadence - Math.floor(180/cadence)) * 60)).padStart(2, '0')}/mile</div>
+                  <div style={{ fontSize: '0.8rem' }}>
+                    ({cadence} BPM)
+                  </div>
+                </div>
               </div>
             )}
 
