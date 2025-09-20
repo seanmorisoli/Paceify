@@ -31,7 +31,7 @@ const Login = () => {
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: 'center',::
       alignItems: 'center',
       background: 'linear-gradient(45deg, #1DB954 30%, #191414 90%)', // Spotify green to black gradient
       color: 'white',
