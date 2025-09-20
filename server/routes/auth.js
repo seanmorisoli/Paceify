@@ -1,94 +1,54 @@
-const express = require("express");
-const axios = require("axios");
-const querystring = require("querystring");
+import express from 'express';
+import axios from 'axios';
+import querystring from 'querystring';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const router = express.Router();
 
-// ⚡ Spotify app credentials (get from https://developer.spotify.com/dashboard)
-const clientID = process.env.SPOTIFY_CLIENT_ID;
-const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-const redirectURI = process.env.SPOTIFY_REDIRECT_URI || "http://localhost:3000/auth/callback";
+const client_id = process.env.SPOTIFY_CLIENT_ID;
+const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
 
-// -------------------
-//  /login → Redirects to Spotify
-// -------------------
-router.get("/login", (req, res) => {
-  // Check if we have the required credentials
-  if (!clientID || !clientSecret) {
-    console.error('Missing Spotify credentials. Please check your .env file');
-    return res.status(500).json({ 
-      error: "Server configuration error",
-      details: "Missing Spotify credentials"
-    });
-  }
-
-  const scope = "user-read-email user-read-private playlist-read-private playlist-modify-public playlist-modify-private";
-  
-  try {
-    const authURL =
-      "https://accounts.spotify.com/authorize?" +
-      querystring.stringify({
-        response_type: "code",
-        client_id: clientID,
-        scope: scope,
-        redirect_uri: redirectURI,
-      });
-
-    res.redirect(authURL);
-  } catch (error) {
-    console.error('Error creating auth URL:', error);
-    res.status(500).json({ 
-      error: "Failed to create authorization URL",
-      details: error.message
-    });
-  }
+// Step 1: /login endpoint → redirect user to Spotify
+router.get('/login', (req, res) => {
+  const scope = 'playlist-read-private playlist-modify-private playlist-modify-public';
+  const authQuery = querystring.stringify({
+    client_id,
+    response_type: 'code',
+    redirect_uri,
+    scope
+  });
+  res.redirect(`https://accounts.spotify.com/authorize?${authQuery}`);
 });
 
-// -------------------
-//  /callback → Handle Spotify response
-// -------------------
-router.get("/callback", async (req, res) => {
+// Step 2: /callback endpoint → Spotify redirects here with code
+router.get('/callback', async (req, res) => {
   const code = req.query.code || null;
 
-  if (!code) {
-    return res.status(400).json({ error: "Authorization code missing" });
-  }
-
   try {
-    const tokenResponse = await axios.post(
-      "https://accounts.spotify.com/api/token",
+    const tokenResponse = await axios.post('https://accounts.spotify.com/api/token',
       querystring.stringify({
-        grant_type: "authorization_code",
-        code: code,
-        redirect_uri: redirectURI,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri
       }),
       {
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization:
-            "Basic " +
-            Buffer.from(clientID + ":" + clientSecret).toString("base64"),
-        },
+          Authorization: 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       }
     );
 
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
+    const { access_token, refresh_token } = tokenResponse.data;
 
-    // ⚡ Option A: Send tokens to frontend
-    res.json({
-      access_token,
-      refresh_token,
-      expires_in,
-    });
-
-    // ⚡ Option B (recommended): store in session/db and redirect
-    // req.session.access_token = access_token;
-    // res.redirect("/dashboard");
-
+    // Later: store tokens in session or return to frontend
+    res.json({ access_token, refresh_token });
   } catch (err) {
-    console.error("Error getting Spotify token:", err.response?.data || err.message);
-    res.status(500).json({ error: "Failed to get token" });
-  } // this is just the error  
+    console.error(err);
+    res.status(500).send('Error getting tokens');
+  }
 });
 
-module.exports = router;
+export default router;

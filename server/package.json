@@ -9,15 +9,22 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "axios": "^1.12.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "axios": "^1.5.0"
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "querystring": "^0.2.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["spotify", "bpm", "running", "playlist", "fitness"],
+  "keywords": [
+    "spotify",
+    "bpm",
+    "running",
+    "playlist",
+    "fitness"
+  ],
   "author": "Team Paceify",
   "license": "MIT"
 }
