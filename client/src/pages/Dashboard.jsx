@@ -42,7 +42,7 @@ const Dashboard = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #2C3E50 0%, #1A1A1A 100%)',
+      background: 'linear-gradient(135deg, #64B5F6 0%, #1E88E5 100%)',
       padding: '2rem',
       color: '#FFFFFF'
     }}>
@@ -59,16 +59,18 @@ const Dashboard = () => {
           marginBottom: '2rem',
           textAlign: 'center',
           color: '#FFFFFF',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+          fontWeight: 'bold'
         }}>
           Paceify Dashboard
         </h1>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: 'rgba(255, 255, 255, 0.2)',
           padding: '1.5rem',
           borderRadius: '10px',
-          marginBottom: '2rem'
+          marginBottom: '2rem',
+          border: '2px solid rgba(0, 0, 0, 0.1)'
         }}>
           <div style={{
             display: 'flex',
@@ -92,7 +94,7 @@ const Dashboard = () => {
                     width: '5rem',
                     padding: '0.5rem',
                     borderRadius: '5px',
-                    border: '1px solid #1DB954',
+                    border: '1px solid #000000ff',
                     background: 'rgba(255, 255, 255, 0.9)',
                     fontSize: '1rem'
                   }}
@@ -116,7 +118,7 @@ const Dashboard = () => {
                     width: '4rem',
                     padding: '0.5rem',
                     borderRadius: '5px',
-                    border: '1px solid #1DB954',
+                    border: '1px solid #000000ff',
                     background: 'rgba(255, 255, 255, 0.9)',
                     fontSize: '1rem'
                   }}

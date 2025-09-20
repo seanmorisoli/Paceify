@@ -10,14 +10,14 @@ const PlaylistCard = ({ track }) => {
 
   return (
     <div style={{
-      background: 'rgba(255, 255, 255, 0.08)',
+      background: 'rgba(255, 255, 255, 0.25)',
       backdropFilter: 'blur(10px)',
       borderRadius: '12px',
       padding: '1.5rem',
       color: '#FFFFFF',
       transition: 'transform 0.2s, box-shadow 0.2s',
       cursor: 'pointer',
-      border: '1px solid rgba(100, 181, 246, 0.2)',
+      border: '2px solid rgba(0, 0, 0, 0.2)',
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
       ':hover': {
         transform: 'translateY(-2px)',
@@ -28,7 +28,7 @@ const PlaylistCard = ({ track }) => {
         margin: '0 0 1rem 0',
         fontSize: '1.3rem',
         fontWeight: '600',
-        color: '#1DB954'
+        color: '#000000ff'
       }}>
         {track.name}
       </h3>
@@ -38,14 +38,18 @@ const PlaylistCard = ({ track }) => {
           margin: '0.5rem 0',
           color: 'rgba(255, 255, 255, 0.9)'
         }}>
-          <span style={{ color: '#1DB954' }}>Artists:</span> {track.artists}
+                    <span style={{ 
+            color: '#FFFFFF',
+            textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+            fontWeight: 'bold'
+          }}>Artists:</span> {track.artists}
         </p>
         
         <p style={{ 
           margin: '0.5rem 0',
           color: 'rgba(255, 255, 255, 0.9)'
         }}>
-          <span style={{ color: '#1DB954' }}>Album:</span> {track.album}
+          <span style={{ color: '#000000ff' }}>Album:</span> {track.album}
         </p>
         
         <div style={{
@@ -60,7 +64,7 @@ const PlaylistCard = ({ track }) => {
           <span style={{
             fontSize: '1.4rem',
             fontWeight: 'bold',
-            color: '#1DB954'
+            color: '#000000ff'
           }}>
             {track.bpm.toFixed(1)} BPM
           </span>
@@ -78,7 +82,7 @@ const PlaylistCard = ({ track }) => {
             borderRadius: '6px',
             textAlign: 'center'
           }}>
-            <div style={{ color: '#1DB954', marginBottom: '0.2rem' }}>Energy</div>
+            <div style={{ color: '#000000ff', marginBottom: '0.2rem' }}>Energy</div>
             <div style={{ fontWeight: '600' }}>{(track.energy * 100).toFixed(0)}%</div>
           </div>
           <div style={{
@@ -87,7 +91,7 @@ const PlaylistCard = ({ track }) => {
             borderRadius: '6px',
             textAlign: 'center'
           }}>
-            <div style={{ color: '#1DB954', marginBottom: '0.2rem' }}>Danceability</div>
+            <div style={{ color: '#000000ff', marginBottom: '0.2rem' }}>Danceability</div>
             <div style={{ fontWeight: '600' }}>{(track.danceability * 100).toFixed(0)}%</div>
           </div>
         </div>
@@ -99,7 +103,7 @@ const PlaylistCard = ({ track }) => {
             fontSize: '0.9rem',
             textAlign: 'right'
           }}>
-            <span style={{ color: '#1DB954' }}>Duration:</span> {formatDuration(track.duration_ms)}
+            <span style={{ color: '#000000ff' }}>Duration:</span> {formatDuration(track.duration_ms)}
           </p>
         )}
       </div>
