@@ -23,7 +23,7 @@ const Login = () => {
   // Handle login button click
   const handleLogin = () => {
     // Redirect to our backend auth endpoint
-    window.location.href = 'http://localhost:3000/auth/login';
+    window.location.href = 'https://c1f97552bcc0.ngrok-free.app/auth/login';
   };
 
   return (
