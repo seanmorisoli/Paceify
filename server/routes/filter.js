@@ -62,6 +62,42 @@ const mockTracks = [
       energy: 1.0,
       danceability: 0.6
     }
+  },
+  {
+    id: 'track6',
+    name: 'Till I Collapse',
+    artists: [{ name: 'Eminem' }],
+    album: { name: 'The Eminem Show' },
+    duration_ms: 298000,
+    audio_features: {
+      tempo: 168.0,  // Perfect for 10:30 pace!
+      energy: 0.95,
+      danceability: 0.7
+    }
+  },
+  {
+    id: 'track7', 
+    name: 'Stronger',
+    artists: [{ name: 'Kelly Clarkson' }],
+    album: { name: 'My December' },
+    duration_ms: 242000,
+    audio_features: {
+      tempo: 162.0,  // Close to target
+      energy: 0.9,
+      danceability: 0.8
+    }
+  },
+  {
+    id: 'track8',
+    name: 'Remember the Name',
+    artists: [{ name: 'Fort Minor' }],
+    album: { name: 'The Rising Tied' },
+    duration_ms: 207000,
+    audio_features: {
+      tempo: 172.0,  // High energy running track
+      energy: 0.85,
+      danceability: 0.75
+    }
   }
 ];
 
