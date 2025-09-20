@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import SongList from '../components/SongList';
 import PlaylistCard from '../components/PlaylistCard';
 
+/**
+ * Dashboard Component
+ * Main page that displays track filtering interface and results
+ * Shows input controls for BPM/cadence filtering and displays matching tracks
+ */
 const Dashboard = () => {
 	const [tracks, setTracks] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -122,12 +127,13 @@ const Dashboard = () => {
   }, [filterMode, paceMinutes, paceSeconds, cadence, tolerance]);
   
   return (
-    <div style={{
+    <div style={{  // Main container - Full page with gradient background
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #84c5faff 0%, #3595e9ff 100%)',
+      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
       padding: '2rem',
       color: '#FFFFFF'
     }}>
+      {/* Content container - Centers and limits width of content */}
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
@@ -147,8 +153,9 @@ const Dashboard = () => {
           Dashboard
         </h1>
 
+        {/* Filter Controls Section - BPM and Tolerance inputs */}
         <div style={{
-          background: '#b8b3b3ff',
+          background: '#4A4A4A',
           padding: '1.5rem',
           borderRadius: '25px',
           marginBottom: '2rem',
@@ -296,12 +303,14 @@ const Dashboard = () => {
                   style={{
                     marginLeft: '0.5rem',
                     width: '4rem',
-                    padding: '8px 12px',
+                    padding: '8px 15px',
                     borderRadius: '25px',
                     border: '2px solid white',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem',
-                    textAlign: 'center'
+                    background: '#4A4A4A',
+                    fontSize: '1.1rem',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 />
                 <span style={{ marginLeft: '0.5rem' }}>BPM</span>
@@ -334,7 +343,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-
         {/* Track Results Display */}
         <div style={{ width: '100%', maxWidth: '800px' }}>
           {/* Create Playlist Button - Show when we have tracks */}
