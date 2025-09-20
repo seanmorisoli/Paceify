@@ -33,7 +33,7 @@ const Login = () => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      background: 'linear-gradient(45deg, #1DB954 30%, #191414 90%)', // Spotify green to black gradient
+      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)', // Light blue to steel blue gradient
       color: 'white',
     }}>
       <h1 style={{ 
