@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import PlaylistCard from '../components/PlaylistCard';
 
+/**
+ * Dashboard Component
+ * Main page that displays track filtering interface and results
+ * Shows input controls for BPM/cadence filtering and displays matching tracks
+ */
 const Dashboard = () => {
-	const [tracks, setTracks] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [cadence, setCadence] = useState(120);
-	const [tolerance, setTolerance] = useState(5);
+  // State management for tracks and filtering
+  const [tracks, setTracks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [cadence, setCadence] = useState(120);
+  const [tolerance, setTolerance] = useState(5);
 
-  // Mock data for testing
+  // Mock track data for development and testing
+  // Will be replaced with actual Spotify data in production
   const mockTracks = [
     {
       id: 'track1',
@@ -30,6 +37,7 @@ const Dashboard = () => {
     }
   ];
 
+  // Effect hook to filter tracks whenever cadence or tolerance changes
   useEffect(() => {
     // Filter mock tracks based on cadence and tolerance
     const filteredTracks = mockTracks.filter(track => {
@@ -40,12 +48,13 @@ const Dashboard = () => {
   }, [cadence, tolerance]);
   
   return (
-    <div style={{
+    <div style={{  // Main container - Full page with gradient background
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #84c5faff 0%, #3595e9ff 100%)',
+      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
       padding: '2rem',
       color: '#FFFFFF'
     }}>
+      {/* Content container - Centers and limits width of content */}
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
@@ -65,8 +74,9 @@ const Dashboard = () => {
           Dashboard
         </h1>
 
+        {/* Filter Controls Section - BPM and Tolerance inputs */}
         <div style={{
-          background: '#b8b3b3ff',
+          background: '#4A4A4A',
           padding: '1.5rem',
           borderRadius: '25px',
           marginBottom: '2rem',
@@ -97,7 +107,7 @@ const Dashboard = () => {
                     padding: '8px 15px',
                     borderRadius: '25px',
                     border: '2px solid white',
-                    background: '#191414',
+                    background: '#4A4A4A',
                     fontSize: '1.1rem',
                     color: 'white',
                     fontWeight: 'bold',
@@ -121,11 +131,14 @@ const Dashboard = () => {
                   style={{
                     marginLeft: '0.5rem',
                     width: '4rem',
-                    padding: '0.5rem',
-                    borderRadius: '5px',
-                    border: '1px solid #000000ff',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem'
+                    padding: '8px 15px',
+                    borderRadius: '25px',
+                    border: '2px solid white',
+                    background: '#4A4A4A',
+                    fontSize: '1.1rem',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 />
               </label>
@@ -133,7 +146,9 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Results Section - Shows loading, error, or track results */}
         {loading ? (
+          // Loading State
           <div style={{ 
             textAlign: 'center', 
             padding: '2rem',
@@ -144,6 +159,7 @@ const Dashboard = () => {
             Loading tracks...
           </div>
         ) : error ? (
+          // Error State
           <div style={{ 
             textAlign: 'center',
             padding: '1rem',
@@ -153,8 +169,10 @@ const Dashboard = () => {
             <p style={{ color: '#ff3b30' }}>{error}</p>
           </div>
         ) : (
+          // Results Display
           <div>
             {tracks.length === 0 ? (
+              // No Results Found
               <div style={{ 
                 textAlign: 'center',
                 padding: '2rem',
@@ -164,6 +182,7 @@ const Dashboard = () => {
                 <p style={{ fontSize: '1.2rem' }}>No tracks found matching your cadence preferences.</p>
               </div>
             ) : (
+              // Track Grid Display
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
