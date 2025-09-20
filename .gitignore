@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Node modules (both server & client)
 node_modules/
 client/node_modules/
@@ -37,6 +36,3 @@ coverage/
 # IDE settings
 .vscode/
 .idea/
-=======
-node_modules
->>>>>>> 02a575374352f66ca814d456eb5c04ba8cf692ce
