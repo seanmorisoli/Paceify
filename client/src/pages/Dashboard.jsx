@@ -282,7 +282,15 @@ const Dashboard = () => {
                       value={paceMinutes}
                       onChange={e => {
                         const val = e.target.value;
-                        setPaceMinutes(val === '' ? '' : Number(val));
+                        if (val === '') {
+                          setPaceMinutes('');
+                        } else {
+                          const numVal = Number(val);
+                          // Allow any positive number up to 99 for typing flexibility
+                          if (numVal >= 0 && numVal <= 99) {
+                            setPaceMinutes(numVal);
+                          }
+                        }
                       }}
                       min="4"
                       max="20"
@@ -304,7 +312,14 @@ const Dashboard = () => {
                       value={paceSeconds}
                       onChange={e => {
                         const val = e.target.value;
-                        setPaceSeconds(val === '' ? '' : Number(val));
+                        if (val === '') {
+                          setPaceSeconds('');
+                        } else {
+                          const numVal = Number(val);
+                          if (numVal >= 0 && numVal <= 59) {
+                            setPaceSeconds(numVal);
+                          }
+                        }
                       }}
                       min="0"
                       max="59"
@@ -345,7 +360,18 @@ const Dashboard = () => {
                   <input
                     type="number"
                     value={cadence}
-                    onChange={e => setCadence(Number(e.target.value))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setCadence('');
+                      } else {
+                        const numVal = Number(val);
+                        // Allow any reasonable number for typing flexibility
+                        if (numVal >= 0 && numVal <= 999) {
+                          setCadence(numVal);
+                        }
+                      }
+                    }}
                     min="60"
                     max="300"
                     style={{
