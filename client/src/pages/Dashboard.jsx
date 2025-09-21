@@ -10,7 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     : 'https://paceify.onrender.com');
 
 const Dashboard = () => {
-  const loginWithSpotify = () => {
+  const loginWithSpotify = async () => {
     const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
     const redirectUri = 'https://paceify-yzcw.onrender.com/auth/callback';
     const scope = 'playlist-modify-private playlist-modify-public user-read-private user-read-email';
@@ -20,7 +20,7 @@ const Dashboard = () => {
     localStorage.setItem('spotify_code_verifier', codeVerifier);
 
     // Generate code challenge (SHA256 + base64url)
-    const codeChallenge = generateCodeChallenge(codeVerifier);
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
 
     // Build Spotify authorization URL
     const authUrl = 'https://accounts.spotify.com/authorize?' +
