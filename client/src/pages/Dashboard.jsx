@@ -80,11 +80,7 @@ const Dashboard = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${tokenData.access_token}`,
         },
-        body: JSON.stringify({
-          paceMinutes: 8,
-          paceSeconds: 0,
-          tolerance: 10,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await resp.json();
