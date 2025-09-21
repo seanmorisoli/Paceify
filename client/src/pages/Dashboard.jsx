@@ -63,7 +63,7 @@ const Dashboard = () => {
 
   const fetchPublicPlaylist = async () => {
     try {
-      const playlistId = '37i9dQZF1DXcBWIGoYBM5M'; // Example: Spotify "Today's Top Hits"
+      const playlistId = '7ccEEmvlr6JX2sakWg8Tqm?si=1OfDEuDfS9eIsJ383ze0nQ'
       const res = await fetch(`${API_BASE_URL}/public/playlist/${playlistId}`);
       const data = await res.json();
       setTracks(data.tracks); // use your existing state
