@@ -160,7 +160,7 @@ const Dashboard = () => {
             fontWeight: 'bold',
           }}
         >
-          Dash board
+          Dashboard
         </h1>
 
         {/* Filter Controls Section */}
@@ -289,7 +289,7 @@ const Dashboard = () => {
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#333', textAlign: 'center' }}>
                   <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
-                  <div style={{ fontSize: '0.8rem', alignItems: 'center' }}>
+                  <div style={{ fontSize: '1.2 rem', alignItems: 'center' }}>
                     ({paceMinutes}:{(paceSeconds || 0).toString().padStart(2, '0')}/mile)
                   </div>
                 </div>
