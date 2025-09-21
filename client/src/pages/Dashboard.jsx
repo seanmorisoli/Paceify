@@ -229,72 +229,82 @@ const Dashboard = () => {
             </div>
 
             {filterMode === 'pace' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <label
-                  style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    color: '#4A4A4A',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}
-                >
-                  <span style={{ marginBottom: '0.5rem' }}>Pace per mile:</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="number"
-                      value={paceMinutes}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '') setPaceMinutes('');
-                        else {
-                          const numVal = Number(val);
-                          if (numVal >= 0 && numVal <= 99) setPaceMinutes(numVal);
-                        }
-                      }}
-                      min="4"
-                      max="20"
-                      style={{
-                        width: '4rem',
-                        padding: '8px 12px',
-                        borderRadius: '25px',
-                        border: '2px solid white',
-                        background: '#4A4A4A',
-                        fontSize: '1.1rem',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        textAlign: 'center',
-                      }}
-                    />
-                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>:</span>
-                    <input
-                      type="number"
-                      value={paceSeconds}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '') setPaceSeconds('');
-                        else {
-                          const numVal = Number(val);
-                          if (numVal >= 0 && numVal <= 59) setPaceSeconds(numVal);
-                        }
-                      }}
-                      min="0"
-                      max="59"
-                      style={{
-                        width: '4rem',
-                        padding: '8px 12px',
-                        borderRadius: '25px',
-                        border: '2px solid white',
-                        background: '#4A4A4A',
-                        fontSize: '1.1rem',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        textAlign: 'center',
-                      }}
-                    />
-                  </div>
-                </label>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1rem',
+                minWidth: '280px'
+              }}>
+                <div style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  color: '#4A4A4A',
+                  textAlign: 'center',
+                  width: '100%',
+                  marginBottom: '0.5rem'
+                }}>
+                  Pace per mile
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center',
+                  alignItems: 'center', 
+                  gap: '0.5rem'
+                }}>
+                  <input
+                    type="number"
+                    value={paceMinutes}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') setPaceMinutes('');
+                      else {
+                        const numVal = Number(val);
+                        if (numVal >= 0 && numVal <= 99) setPaceMinutes(numVal);
+                      }
+                    }}
+                    min="4"
+                    max="20"
+                    style={{
+                      width: '4rem',
+                      padding: '8px 12px',
+                      borderRadius: '25px',
+                      border: '2px solid white',
+                      background: '#4A4A4A',
+                      fontSize: '1.1rem',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }}
+                  />
+                  <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#4A4A4A' }}>:</span>
+                  <input
+                    type="number"
+                    value={paceSeconds}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') setPaceSeconds('');
+                      else {
+                        const numVal = Number(val);
+                        if (numVal >= 0 && numVal <= 59) setPaceSeconds(numVal);
+                      }
+                    }}
+                    min="0"
+                    max="59"
+                    style={{
+                      width: '4rem',
+                      padding: '8px 12px',
+                      borderRadius: '25px',
+                      border: '2px solid white',
+                      background: '#4A4A4A',
+                      fontSize: '1.1rem',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }}
+                  />
+                </div>
                 <div style={{ fontSize: '0.9rem', color: '#333', textAlign: 'center' }}>
                   <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
                   <div style={{ fontSize: '0.8rem', alignItems: 'center' }}>
