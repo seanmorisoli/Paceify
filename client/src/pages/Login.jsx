@@ -1,44 +1,8 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React from 'react';
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  useEffect(() => {
-    // Only run this effect if the URL has Spotify tokens
-    if (!window.location.search) return;
-
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const expiresIn = searchParams.get('expires_in');
-    const error = searchParams.get('error');
-
-    if (accessToken) {
-      console.log('Login callback received tokens:', { accessToken, refreshToken, expiresIn });
-
-      // Store tokens in localStorage
-      localStorage.setItem('spotify_access_token', accessToken);
-      if (refreshToken) localStorage.setItem('spotify_refresh_token', refreshToken);
-      if (expiresIn) localStorage.setItem('spotify_expires_in', expiresIn);
-
-      // Clean URL so tokens aren't visible
-      try {
-        const newUrl = window.location.origin + '/dashboard';
-        window.history.replaceState({}, document.title, newUrl);
-      } catch (e) {
-        console.warn('Could not clean URL', e);
-      }
-
-      // Navigate to dashboard
-      navigate('/dashboard', { replace: true });
-    } else if (error) {
-      console.error('Spotify Auth Error:', error);
-    }
-  }, [searchParams, navigate]);
-
   const handleLogin = () => {
-    // Must point to deployed backend endpoint that handles Spotify OAuth
+    // Direct to backend login endpoint
     window.location.href = 'https://paceify.onrender.com/auth/login';
   };
 
