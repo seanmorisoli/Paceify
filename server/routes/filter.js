@@ -55,6 +55,10 @@ router.post('/filter', async (req, res) => {
       // Auth token - should be extracted from headers in production
       access_token
     } = req.body;
+    console.log('--- /filter request received ---');
+    console.log('Request body:', req.body);
+    console.log('Access token from header/body:', accessToken ? '✅ present' : '❌ missing');
+
 
     // Extract access token from Authorization header or request body
     const accessToken = req.headers.authorization?.replace('Bearer ', '') || access_token;
