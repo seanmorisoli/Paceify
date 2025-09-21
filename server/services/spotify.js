@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 const SPOTIFY_API = 'https://api.spotify.com/v1';
 
 function authHeader(token) {

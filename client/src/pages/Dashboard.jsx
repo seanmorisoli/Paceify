@@ -7,7 +7,7 @@ import PlaylistCard from '../components/PlaylistCard';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.MODE === 'development' 
     ? 'http://localhost:3000' 
-    : 'https://paceify-yzcw.onrender.com');
+    : 'https://paceify.onrender.com');
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -125,7 +125,7 @@ const Dashboard = () => {
 
       const payload = { name: playlistName, trackUris: tracks.map((t) => t.uri) };
 
-      const response = await fetch(`${API_BASE_URL}/playlists/create`, {
+      const response = await fetch('http://localhost:3000/playlists/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
