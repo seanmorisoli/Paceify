@@ -94,6 +94,11 @@ const Dashboard = () => {
       return;
     }
 
+    if (!accessToken) {
+      setError('No Spotify access token found.');
+      return;
+    }
+
     setCreatingPlaylist(true);
     setError(null);
 
