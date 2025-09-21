@@ -1,12 +1,7 @@
 import React from 'react';
 
-/**
- * PlaylistCard Component
- * Displays a single track's information in a card format
- * @param {Object} track - Contains track data (name, artists, album, bpm, energy, danceability)
- */
 const PlaylistCard = ({ track }) => {
-  // Helper function to format duration from milliseconds to mm:ss format (e.g., 3:45)
+  // Helper function to format duration from milliseconds to mm:ss
   const formatDuration = (ms) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = ((ms % 60000) / 1000).toFixed(0);
@@ -14,7 +9,6 @@ const PlaylistCard = ({ track }) => {
   };
 
   return (
-    // Main card container - Charcoal grey background with white border
     <div style={{
       background: '#ffffffff',
       borderRadius: '25px',
@@ -30,7 +24,6 @@ const PlaylistCard = ({ track }) => {
         boxShadow: '0 6px 12px rgba(0, 0, 0, 0.2)'
       }
     }}>
-      {/* Track Title Section */}
       <h3 style={{ 
         margin: '0 0 1rem 0',
         fontSize: '1.3rem',
@@ -40,9 +33,7 @@ const PlaylistCard = ({ track }) => {
         {track.name}
       </h3>
       
-      {/* Track Details Container */}
       <div style={{ fontSize: '0.95rem' }}>
-        {/* Artist Information */}
         <p style={{ 
           margin: '0.5rem 0',
           color: 'rgba(255, 255, 255, 0.9)'
@@ -54,7 +45,6 @@ const PlaylistCard = ({ track }) => {
           }}>Artists:</span> {track.artists}
         </p>
         
-        {/* Album Information */}
         <p style={{ 
           margin: '0.5rem 0',
           color: 'rgba(255, 255, 255, 0.9)'
@@ -62,7 +52,6 @@ const PlaylistCard = ({ track }) => {
           <span style={{ color: '#000000ff' }}>Album:</span> {track.album}
         </p>
         
-        {/* BPM Display Section - Prominently displays the track's tempo */}
         <div style={{
           background: 'rgba(29, 185, 84, 0.1)',
           padding: '0.8rem',
@@ -81,7 +70,6 @@ const PlaylistCard = ({ track }) => {
           </span>
         </div>
 
-        {/* Track Metrics Grid - Displays Energy and Danceability */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -108,7 +96,6 @@ const PlaylistCard = ({ track }) => {
           </div>
         </div>
 
-        {/* Duration Display - Conditionally rendered if duration_ms is available */}
         {track.duration_ms && (
           <p style={{
             margin: '0.5rem 0',

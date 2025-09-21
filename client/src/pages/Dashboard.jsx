@@ -227,7 +227,7 @@ const Dashboard = () => {
 
         {/* Filter Controls Section - BPM and Tolerance inputs */}
         <div style={{
-          background: '#4A4A4A',
+          background: '#ffffffff',
           padding: '1.5rem',
           borderRadius: '25px',
           marginBottom: '2rem',
@@ -248,7 +248,7 @@ const Dashboard = () => {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Filter by:</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>Filter by:</span>
               <select
                 value={filterMode}
                 onChange={e => setFilterMode(e.target.value)}
@@ -256,7 +256,7 @@ const Dashboard = () => {
                   padding: '8px 15px',
                   borderRadius: '25px',
                   border: '2px solid white',
-                  background: '#191414',
+                  background: '#4A4A4A',
                   fontSize: '1.1rem',
                   color: 'white',
                   fontWeight: 'bold'
@@ -274,7 +274,7 @@ const Dashboard = () => {
                 alignItems: 'center',
                 gap: '1rem'
               }}>
-                <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                   Pace per mile:
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <input
@@ -299,7 +299,7 @@ const Dashboard = () => {
                         padding: '8px 12px',
                         borderRadius: '25px',
                         border: '2px solid white',
-                        background: '#191414',
+                        background: '#4A4A4A',
                         fontSize: '1.1rem',
                         color: 'white',
                         fontWeight: 'bold',
@@ -328,7 +328,7 @@ const Dashboard = () => {
                         padding: '8px 12px',
                         borderRadius: '25px',
                         border: '2px solid white',
-                        background: '#191414',
+                        background: '#4A4A4A',
                         fontSize: '1.1rem',
                         color: 'white',
                         fontWeight: 'bold',
@@ -355,7 +355,7 @@ const Dashboard = () => {
                 alignItems: 'center',
                 gap: '1rem'
               }}>
-                <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                   Target Cadence (BPM):
                   <input
                     type="number"
@@ -380,7 +380,7 @@ const Dashboard = () => {
                       padding: '8px 15px',
                       borderRadius: '25px',
                       border: '2px solid white',
-                      background: '#191414',
+                      background: '#4A4A4A',
                       fontSize: '1.1rem',
                       color: 'white',
                       fontWeight: 'bold',
@@ -394,7 +394,7 @@ const Dashboard = () => {
                   textAlign: 'center'
                 }}>
                   <div>≈ {Math.floor(180/cadence)}:{String(Math.round((180/cadence - Math.floor(180/cadence)) * 60)).padStart(2, '0')}/mile</div>
-                  <div style={{ fontSize: '0.8rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'black' }}>
                     ({cadence} BPM)
                   </div>
                 </div>
@@ -406,7 +406,7 @@ const Dashboard = () => {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                 Tolerance: ±
                 <input
                   type="number"

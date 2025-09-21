@@ -48,7 +48,7 @@ const Login = () => {
       <button
         onClick={handleLogin}
         style={{
-          backgroundColor: '#191414', // Spotify black
+          backgroundColor: '#4A4A4A', // Dark gray
           color: 'white',
           border: '2px solid white',
           borderRadius: '25px',
