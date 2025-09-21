@@ -198,11 +198,14 @@ const Dashboard = () => {
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value)}
                 style={{
-                  padding: '2px 2px',
+                  padding: '8px 15px',
                   borderRadius: '20px',
                   border: '2px solid white',
                   background: '#4A4A4A',
                   fontSize: '1.1rem',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
                   color: 'white',
                   fontWeight: 'bold',
                 }}
@@ -217,13 +220,15 @@ const Dashboard = () => {
                 <label
                   style={{
                     fontSize: '1.1rem',
-                    alignItems: 'center',
                     fontWeight: 'bold',
                     color: '#4A4A4A',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
                   }}
                 >
-                  Pace per mile:
-                  <div style={{ display: 'flex', textAlign: 'right', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <span style={{ marginBottom: '0.5rem' }}>Pace per mile:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input
                       type="number"
                       value={paceMinutes}
