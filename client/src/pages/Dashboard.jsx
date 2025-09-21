@@ -105,43 +105,30 @@ const Dashboard = () => {
 
   // Create playlist
   const createPlaylist = async () => {
-    if (!tracks || tracks.length === 0) {
-      setError('No tracks available to create playlist');
-      return;
-    }
-
-    if (!accessToken) {
-      setError('No Spotify access token found.');
-      return;
-    }
-
-    setCreatingPlaylist(true);
-    setError(null);
+    if (!tracks || tracks.length === 0) return alert('No tracks to create playlist');
 
     try {
-      const playlistName = apiResponse?.originalPace
-        ? `Running Mix - ${apiResponse.originalPace} pace (${cadence} BPM)`
-        : `Running Mix - ${cadence} BPM`;
-
-      const payload = { name: playlistName, trackUris: tracks.map((t) => t.uri) };
-
       const response = await fetch(`${API_BASE_URL}/playlists/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          name: `Running Mix - ${calculateBPMFromPace(paceMinutes, paceSeconds)} BPM`,
+          trackUris: tracks.map(t => t.uri)
+        })
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) throw new Error('Failed to create playlist');
 
       const playlistData = await response.json();
+      console.log('Playlist created:', playlistData);
       setCreatedPlaylist(playlistData);
+
     } catch (err) {
-      setError(`Failed to create playlist: ${err.message}`);
-    } finally {
-      setCreatingPlaylist(false);
+      console.error(err);
+      setError(err.message);
     }
   };
 
