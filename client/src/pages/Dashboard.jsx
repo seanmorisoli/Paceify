@@ -60,40 +60,34 @@ const Dashboard = () => {
 
   // Filter tracks
   const filterTracks = async () => {
-    console.log('filterTracks called with accessToken:', !!accessToken);
-    
     if (!accessToken) {
       setError('No Spotify access token found.');
-      console.log('No access token - skipping filter');
       return;
     }
 
-    console.log('Starting track filtering...');
     setLoading(true);
     setError(null);
 
     try {
-      const payload =
-        filterMode === 'pace'
-          ? { paceMinutes, paceSeconds, tolerance }
-          : { targetCadence: cadence, tolerance };
+      const payload = filterMode === 'pace'
+        ? { paceMinutes, paceSeconds, tolerance }
+        : { targetCadence: cadence, tolerance };
 
+      // Send token to backend via Authorization header
       const response = await fetch(`${API_BASE_URL}/filter/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${accessToken}` // <-- sending token
         },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      setApiResponse(data);
       setTracks(data.tracks || []);
+      setApiResponse(data);
       if (filterMode === 'pace' && data.targetCadence) setCadence(data.targetCadence);
     } catch (err) {
       setError(`Failed to filter tracks: ${err.message}`);

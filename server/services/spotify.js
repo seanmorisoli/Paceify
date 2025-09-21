@@ -126,48 +126,38 @@ export async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
  * @param {number} limit - max tracks to fetch (default 50, max 50 per request)
  * @returns {Promise<Array>} Array of track objects with audio features
  */
-  export async function getUserSavedTracks(accessToken, limit = 50) {
+export async function getUserSavedTracks(accessToken, limit = 50) {
     let allTracks = [];
-    let next = `https://api.spotify.com/v1/me/tracks?limit=${limit}`;
-
-    while (next) {
-      const res = await fetch(next, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
-      const data = await res.json();
-
-      const tracks = data.items.map(item => item.track);
-      allTracks = allTracks.concat(tracks);
-
-      next = data.next;
+    let url = `https://api.spotify.com/v1/me/tracks?limit=${limit}`;
+    
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    
+    if (!res.ok) {
+      console.error('Spotify API error', await res.text());
+      return [];
     }
+    
+    const data = await res.json();
+    allTracks = data.items.map(item => item.track);
 
-    // Fetch audio features in batches of 100
-    const trackIds = allTracks.map(t => t.id);
-    let audioFeatures = [];
+    // Fetch audio features
+    const ids = allTracks.map(t => t.id).join(',');
+    const afRes = await fetch(`https://api.spotify.com/v1/audio-features?ids=${ids}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const afData = await afRes.json();
 
-    for (let i = 0; i < trackIds.length; i += 100) {
-      const batch = trackIds.slice(i, i + 100).join(',');
-      const featuresRes = await fetch(`https://api.spotify.com/v1/audio-features?ids=${batch}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const featuresData = await featuresRes.json();
-      audioFeatures = audioFeatures.concat(featuresData.audio_features);
-    }
-
-    // Merge audio features into track objects
-    const tracksWithFeatures = allTracks.map(track => {
-      const features = audioFeatures.find(f => f.id === track.id);
-      return {
-        ...track,
-        audio_features: features,
-      };
+    // Attach audio features to tracks
+    allTracks.forEach((t, i) => {
+      t.audio_features = afData.audio_features[i];
     });
 
-    return tracksWithFeatures;
-  }
+    return allTracks;
+}
 
 /**
  * Get track recommendations based on seed tracks and audio features
