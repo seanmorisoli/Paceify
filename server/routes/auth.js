@@ -6,7 +6,6 @@ import querystring from 'querystring';
 
 
 const router = express.Router();
-const userTokens = new Map();
 
 // Utility to generate a random string
 function generateRandomString(length) {
@@ -101,28 +100,6 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-router.get('/client-token', async (req, res) => {
-  const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-
-  const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-  try {
-    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${authString}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: 'grant_type=client_credentials'
-    });
-    const data = await tokenRes.json();
-    res.json(data); // { access_token, token_type, expires_in }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to get client token' });
-  }
-});
 
 router.post('/token', async (req, res) => {
   try {
@@ -179,6 +156,34 @@ router.get('/token/:userId', (req, res) => {
   if (!tokens) return res.status(404).json({ error: 'No tokens found for user' });
 
   res.json(tokens);
+});
+
+router.post('/refresh', async (req, res) => {
+  const { userId } = req.body;
+  const tokens = userTokens.get(userId);
+  if (!tokens || !tokens.refresh_token) return res.status(400).json({ error: 'No refresh token found' });
+
+  const params = new URLSearchParams();
+  params.append('grant_type', 'refresh_token');
+  params.append('refresh_token', tokens.refresh_token);
+  params.append('client_id', process.env.SPOTIFY_CLIENT_ID);
+
+  try {
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+    const data = await response.json();
+    if (data.error) return res.status(400).json(data);
+
+    // Update access token in memory
+    userTokens.set(userId, { ...tokens, access_token: data.access_token });
+    res.json({ access_token: data.access_token, expires_in: data.expires_in });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to refresh token' });
+  }
 });
 
 export default router;
