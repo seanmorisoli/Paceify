@@ -126,39 +126,48 @@ export async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
  * @param {number} limit - max tracks to fetch (default 50, max 50 per request)
  * @returns {Promise<Array>} Array of track objects with audio features
  */
-export async function getUserSavedTracks(accessToken, limit = 50) {
-  const items = [];
-  let url = `${SPOTIFY_API}/me/tracks?limit=${Math.min(limit, 50)}`;
-  let fetched = 0;
+  export async function getUserSavedTracks(accessToken, limit = 50) {
+    let allTracks = [];
+    let next = `https://api.spotify.com/v1/me/tracks?limit=${limit}`;
 
-  while (url && fetched < limit) {
-    const data = await handleRequest(url, { headers: authHeader(accessToken) });
-    
-    const tracks = (data.items || []).map(item => item.track).filter(track => track && track.id);
-    items.push(...tracks);
-    fetched += tracks.length;
-    
-    url = data.next && fetched < limit ? data.next : null;
-  }
+    while (next) {
+      const res = await fetch(next, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
-  // Get audio features for all tracks
-  const trackIds = items.map(track => track.id);
-  const audioFeatures = await getAudioFeatures(trackIds, accessToken);
-  
-  // Create a map of track ID to audio features
-  const featuresMap = {};
-  audioFeatures.forEach(feature => {
-    if (feature && feature.id) {
-      featuresMap[feature.id] = feature;
+      if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
+      const data = await res.json();
+
+      const tracks = data.items.map(item => item.track);
+      allTracks = allTracks.concat(tracks);
+
+      next = data.next;
     }
-  });
 
-  // Combine tracks with their audio features
-  return items.map(track => ({
-    ...track,
-    audio_features: featuresMap[track.id] || null
-  })).filter(track => track.audio_features); // Only return tracks with audio features
-}
+    // Fetch audio features in batches of 100
+    const trackIds = allTracks.map(t => t.id);
+    let audioFeatures = [];
+
+    for (let i = 0; i < trackIds.length; i += 100) {
+      const batch = trackIds.slice(i, i + 100).join(',');
+      const featuresRes = await fetch(`https://api.spotify.com/v1/audio-features?ids=${batch}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const featuresData = await featuresRes.json();
+      audioFeatures = audioFeatures.concat(featuresData.audio_features);
+    }
+
+    // Merge audio features into track objects
+    const tracksWithFeatures = allTracks.map(track => {
+      const features = audioFeatures.find(f => f.id === track.id);
+      return {
+        ...track,
+        audio_features: features,
+      };
+    });
+
+    return tracksWithFeatures;
+  }
 
 /**
  * Get track recommendations based on seed tracks and audio features
