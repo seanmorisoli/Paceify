@@ -4,27 +4,84 @@ import PlaylistCard from '../components/PlaylistCard';
 
 /**
  * Dashboard Component
- * Main page that displays track filtering interface and results
- * Shows input controls for BPM/cadence filtering and displays matching tracks
+ * Main interface for finding songs that match your running pace
+ * Features:
+ * - Filter by running pace (minutes/mile) or direct BPM input
+ * - Adjustable tolerance range for BPM matching
+ * - Real-time track filtering with API integration
+ * - Playlist creation from filtered tracks
+ * - Dynamic display of matching songs with their properties
+ * - Automatic BPM/pace conversion
  */
 const Dashboard = () => {
-	const [tracks, setTracks] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
-	const [cadence, setCadence] = useState(168); // Default to 10:30 pace
-	const [tolerance, setTolerance] = useState(10); // Match backend default
-  const [paceMinutes, setPaceMinutes] = useState(10);
-  const [paceSeconds, setPaceSeconds] = useState(30);
-  const [filterMode, setFilterMode] = useState('pace'); // 'pace' or 'bpm'
-  const [apiResponse, setApiResponse] = useState(null);
-  const [creatingPlaylist, setCreatingPlaylist] = useState(false);
-  const [createdPlaylist, setCreatedPlaylist] = useState(null);
+  // Core state for track management
+  const [tracks, setTracks] = useState([]); // Stores filtered track results
+  const [loading, setLoading] = useState(false); // Controls loading states
+  const [error, setError] = useState(null); // Stores error messages
+  
+  // Running pace and BPM settings
+  const [cadence, setCadence] = useState(168); // Default to 10:30 pace (168 BPM)
+  const [tolerance, setTolerance] = useState(10); // Match backend default tolerance
+  // Pace input controls (minutes:seconds per mile)
+  const [paceMinutes, setPaceMinutes] = useState(10); // Minutes portion of pace
+  const [paceSeconds, setPaceSeconds] = useState(30); // Seconds portion of pace
+  const [filterMode, setFilterMode] = useState('pace'); // Toggle between 'pace' or 'bpm' input modes
+  
+  // API and playlist management
+  const [apiResponse, setApiResponse] = useState(null); // Stores the complete API response
+  const [creatingPlaylist, setCreatingPlaylist] = useState(false); // Controls playlist creation state
+  const [createdPlaylist, setCreatedPlaylist] = useState(null); // Stores created playlist details
 
-  // API call to filter tracks
+  // Function to calculate BPM from pace in real-time (frontend only)
+  const calculateBPMFromPace = (minutes, seconds) => {
+    if (!minutes || minutes < 1 || !seconds === undefined) return 168; // Default fallback
+    
+    // Convert pace to total seconds per mile
+    const totalSecondsPerMile = (minutes * 60) + (seconds || 0);
+    
+    // Convert to speed in miles per minute
+    const milesPerMinute = 1 / (totalSecondsPerMile / 60);
+    
+    // Convert to mph for stride length estimation
+    const mph = milesPerMinute * 60;
+    
+    // Estimate stride length based on speed
+    let estimatedStrideFeet;
+    if (mph >= 8.0) {
+      estimatedStrideFeet = 3.5; // Fast runner
+    } else if (mph >= 6.5) {
+      estimatedStrideFeet = 3.2; // Moderate pace  
+    } else if (mph >= 5.0) {
+      estimatedStrideFeet = 3.0; // Casual jogging
+    } else {
+      estimatedStrideFeet = 2.8; // Walking/very slow
+    }
+    
+    // Calculate cadence: speed × feet per mile / stride length
+    const cadenceCalc = (milesPerMinute * 5280) / estimatedStrideFeet;
+    
+    return Math.round(cadenceCalc);
+  };
+
+  /**
+   * Filters tracks based on either pace or BPM criteria
+   * Makes API call to backend service to get matching tracks
+   * Handles both pace-based (min:sec per mile) and direct BPM filtering
+   * Updates the tracks list and stores full API response
+   */
   const filterTracks = async () => {
-    if (filterMode === 'pace' && (!paceMinutes || paceMinutes < 1)) return;
-    if (filterMode === 'bpm' && (!cadence || cadence < 1)) return;
+    console.log('filterTracks called with:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
+    
+    if (filterMode === 'pace' && (!paceMinutes || paceMinutes < 1 || paceMinutes === '')) {
+        console.log('Skipping API call - invalid pace minutes:', paceMinutes);
+        return;
+      }
+    if (filterMode === 'bpm' && (!cadence || cadence < 1)) {
+      console.log('Skipping API call - invalid cadence:', cadence);
+      return;
+    }
 
+    console.log('Making API call...');
     setLoading(true);
     setError(null);
 
@@ -35,7 +92,7 @@ const Dashboard = () => {
 
       console.log('Filtering with payload:', payload);
 
-      const response = await fetch('http://localhost:3000/filter/filter', {
+      const response = await fetch('/api/filter/filter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,9 +106,11 @@ const Dashboard = () => {
 
       const data = await response.json();
       console.log('Filter response:', data);
+      console.log('Setting tracks to:', data.tracks);
       
       setApiResponse(data);
       setTracks(data.tracks || []);
+      console.log('Tracks state should now be:', data.tracks || []);
       
       // Update cadence display if using pace mode
       if (filterMode === 'pace' && data.targetCadence) {
@@ -67,7 +126,13 @@ const Dashboard = () => {
     }
   };
 
-  // Create a new playlist with filtered tracks
+  /**
+   * Creates a new Spotify playlist from the filtered tracks
+   * - Generates a descriptive name based on pace/BPM
+   * - Includes all currently filtered tracks
+   * - Sets playlist to private by default
+   * - Updates UI with creation status and success message
+   */
   const createPlaylist = async () => {
     if (!tracks || tracks.length === 0) {
       setError('No tracks available to create playlist');
@@ -91,7 +156,7 @@ const Dashboard = () => {
 
       console.log('Creating playlist with payload:', payload);
 
-      const response = await fetch('http://localhost:3000/playlists/create', {
+      const response = await fetch('/api/playlists/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,9 +182,16 @@ const Dashboard = () => {
     }
   };
 
-  // Auto-filter when inputs change
+  /**
+   * Automatically triggers track filtering when any filter criteria changes
+   * - Debounces API calls by 500ms to prevent excessive requests
+   * - Watches for changes in filterMode, pace settings, cadence, and tolerance
+   * - Cleans up timeout on component unmount or criteria change
+   */
   useEffect(() => {
+    console.log('Dashboard useEffect triggered:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     const timeoutId = setTimeout(() => {
+      console.log('About to call filterTracks...');
       filterTracks();
     }, 500); // Debounce API calls
 
@@ -155,7 +227,7 @@ const Dashboard = () => {
 
         {/* Filter Controls Section - BPM and Tolerance inputs */}
         <div style={{
-          background: '#4A4A4A',
+          background: '#ffffffff',
           padding: '1.5rem',
           borderRadius: '25px',
           marginBottom: '2rem',
@@ -176,7 +248,7 @@ const Dashboard = () => {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Filter by:</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>Filter by:</span>
               <select
                 value={filterMode}
                 onChange={e => setFilterMode(e.target.value)}
@@ -184,7 +256,7 @@ const Dashboard = () => {
                   padding: '8px 15px',
                   borderRadius: '25px',
                   border: '2px solid white',
-                  background: '#191414',
+                  background: '#4A4A4A',
                   fontSize: '1.1rem',
                   color: 'white',
                   fontWeight: 'bold'
@@ -202,13 +274,24 @@ const Dashboard = () => {
                 alignItems: 'center',
                 gap: '1rem'
               }}>
-                <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                   Pace per mile:
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <input
                       type="number"
                       value={paceMinutes}
-                      onChange={e => setPaceMinutes(Number(e.target.value))}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setPaceMinutes('');
+                        } else {
+                          const numVal = Number(val);
+                          // Allow any positive number up to 99 for typing flexibility
+                          if (numVal >= 0 && numVal <= 99) {
+                            setPaceMinutes(numVal);
+                          }
+                        }
+                      }}
                       min="4"
                       max="20"
                       style={{
@@ -216,7 +299,7 @@ const Dashboard = () => {
                         padding: '8px 12px',
                         borderRadius: '25px',
                         border: '2px solid white',
-                        background: '#191414',
+                        background: '#4A4A4A',
                         fontSize: '1.1rem',
                         color: 'white',
                         fontWeight: 'bold',
@@ -227,7 +310,17 @@ const Dashboard = () => {
                     <input
                       type="number"
                       value={paceSeconds}
-                      onChange={e => setPaceSeconds(Number(e.target.value))}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setPaceSeconds('');
+                        } else {
+                          const numVal = Number(val);
+                          if (numVal >= 0 && numVal <= 59) {
+                            setPaceSeconds(numVal);
+                          }
+                        }
+                      }}
                       min="0"
                       max="59"
                       style={{
@@ -235,7 +328,7 @@ const Dashboard = () => {
                         padding: '8px 12px',
                         borderRadius: '25px',
                         border: '2px solid white',
-                        background: '#191414',
+                        background: '#4A4A4A',
                         fontSize: '1.1rem',
                         color: 'white',
                         fontWeight: 'bold',
@@ -249,9 +342,9 @@ const Dashboard = () => {
                   color: '#333',
                   textAlign: 'center'
                 }}>
-                  <div>≈ {cadence} BPM</div>
+                  <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
                   <div style={{ fontSize: '0.8rem' }}>
-                    ({paceMinutes}:{paceSeconds.toString().padStart(2, '0')}/mile)
+                    ({paceMinutes}:{(paceSeconds || 0).toString().padStart(2, '0')}/mile)
                   </div>
                 </div>
               </div>
@@ -262,12 +355,23 @@ const Dashboard = () => {
                 alignItems: 'center',
                 gap: '1rem'
               }}>
-                <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                   Target Cadence (BPM):
                   <input
                     type="number"
                     value={cadence}
-                    onChange={e => setCadence(Number(e.target.value))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setCadence('');
+                      } else {
+                        const numVal = Number(val);
+                        // Allow any reasonable number for typing flexibility
+                        if (numVal >= 0 && numVal <= 999) {
+                          setCadence(numVal);
+                        }
+                      }
+                    }}
                     min="60"
                     max="300"
                     style={{
@@ -276,7 +380,7 @@ const Dashboard = () => {
                       padding: '8px 15px',
                       borderRadius: '25px',
                       border: '2px solid white',
-                      background: '#191414',
+                      background: '#4A4A4A',
                       fontSize: '1.1rem',
                       color: 'white',
                       fontWeight: 'bold',
@@ -290,7 +394,7 @@ const Dashboard = () => {
                   textAlign: 'center'
                 }}>
                   <div>≈ {Math.floor(180/cadence)}:{String(Math.round((180/cadence - Math.floor(180/cadence)) * 60)).padStart(2, '0')}/mile</div>
-                  <div style={{ fontSize: '0.8rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'black' }}>
                     ({cadence} BPM)
                   </div>
                 </div>
@@ -302,12 +406,23 @@ const Dashboard = () => {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <label style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                 Tolerance: ±
                 <input
                   type="number"
                   value={tolerance}
-                  onChange={e => setTolerance(Number(e.target.value))}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setTolerance('');
+                    } else {
+                      const numVal = Number(val);
+                      // Allow reasonable tolerance values for typing
+                      if (numVal >= 0 && numVal <= 99) {
+                        setTolerance(numVal);
+                      }
+                    }
+                  }}
                   min="1"
                   max="30"
                   style={{

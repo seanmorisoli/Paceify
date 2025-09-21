@@ -2,6 +2,9 @@ import React from 'react';
 import './SongList.css';
 
 const SongList = ({ tracks, targetCadence, isLoading }) => {
+  console.log('SongList render - props:', { tracks, targetCadence, isLoading });
+  console.log('SongList - tracks length:', tracks ? tracks.length : 'tracks is null/undefined');
+  
   // Format duration from milliseconds to MM:SS
   const formatDuration = (duration_ms) => {
     const minutes = Math.floor(duration_ms / 60000);
