@@ -9,11 +9,12 @@ Paceify is a website that creates personalized playlists to exercise to based on
 - **Cadence-based playlist generation** – tracks filtered by beats per minute (BPM)
 - **User-friendly interface** – simple dashboard to view and play recommended tracks
 - **Optional tempo filtering** – customize playlist based on your running style
+- **And more coming soon...**
 
 ---
 
 ## Tech Stack
-- **Backend:** Node.js, Express, Spotify Web API, (Maybe Deezer soon...) (Maybe even Gemini API soon......)
+- **Backend:** Node.js, Express, Spotify Web API
 - **Frontend:** React
 - **Authentication:** OAuth 2.0 with Spotify
 - **Styling:** Tailwind CSS
@@ -21,4 +22,4 @@ Paceify is a website that creates personalized playlists to exercise to based on
 ---
 
 ## Authors
-Sean Morisoli, David Lindsey, Ansel Gunther, Kang Shin Young
+Sean Morisoli, David Lindsey, Ansel Gunther
