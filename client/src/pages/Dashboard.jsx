@@ -397,6 +397,20 @@ const Dashboard = () => {
 
 
         {/* Display Tracks and Playlist */}
+        <button
+          onClick={createPlaylist}
+          style={{
+            marginTop: '1rem',
+            padding: '10px 20px',
+            borderRadius: '25px',
+            background: '#4A90E2',
+            color: 'white',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          Create Playlist
+        </button>
         <SongList tracks={tracks} />
         {createdPlaylist && <PlaylistCard playlist={createdPlaylist} />}
 
