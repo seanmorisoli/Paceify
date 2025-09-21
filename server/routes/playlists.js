@@ -20,10 +20,10 @@ router.post('/create', async (req, res) => {
     // Step 1: Create the playlist
     const playlist = await createPlaylist(null, name, {}, accessToken);
 
-    // Step 2: Add tracks to it
+    // Step 2: Add tracks to the newly created playlist
     await addTracksToPlaylist(playlist.id, trackUris, accessToken);
 
-    console.log(`Playlist created with ${trackUris.length} tracks`);
+    console.log(`Playlist "${playlist.name}" created with ${trackUris.length} tracks`);
     res.json(playlist);
   } catch (err) {
     console.error('Error creating playlist:', err.response?.data || err.message);
