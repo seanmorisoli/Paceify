@@ -57,12 +57,15 @@ router.get('/callback', async (req, res) => {
       return res.status(400).json(data);
     }
 
-    const accessToken = data.access_token;
-    const refreshToken = data.refresh_token;
+  const accessToken = data.access_token;
+  const refreshToken = data.refresh_token;
 
-    // OPTIONAL: store tokens in session or database
-    // For now, just redirect to frontend dashboard
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?access_token=${accessToken}`);
+  // OPTIONAL: store tokens in session or database
+  // Redirect to frontend login route with tokens in query so the Login component can pick them up
+  const frontend = process.env.FRONTEND_URL || 'http://localhost:8080';
+  const redirectParams = querystring.stringify({ access_token: accessToken, refresh_token: refreshToken });
+  // Redirect to /loginso the frontend Login.jsx will read tokens from the URL and navigate to dashboard
+  res.redirect(`${frontend.replace(/\/$/, '')}/login?${redirectParams}`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Error exchanging code for token');

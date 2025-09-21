@@ -8,13 +8,31 @@ const Login = () => {
   // Handle the callback from Spotify
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    const expiresIn = searchParams.get('expires_in');
     const error = searchParams.get('error');
 
     if (accessToken) {
-      // Store the token
+      // Debug
+      console.log('Login callback received tokens:', { accessToken, refreshToken, expiresIn });
+
+      // Store tokens
       localStorage.setItem('spotify_access_token', accessToken);
-      // Redirect to dashboard
-      navigate('/dashboard');
+      if (refreshToken) localStorage.setItem('spotify_refresh_token', refreshToken);
+      if (expiresIn) localStorage.setItem('spotify_expires_in', expiresIn);
+
+      // Remove tokens from URL to avoid leaks (use replaceState so history isn't polluted)
+      try {
+        if (window.history && window.history.replaceState) {
+          const newUrl = window.location.origin + '/dashboard';
+          window.history.replaceState({}, document.title, newUrl);
+        }
+      } catch (e) {
+        console.warn('Could not clean URL', e);
+      }
+
+      // Ensure we navigate to dashboard. Use full-page replace to avoid router timing issues.
+      window.location.replace('/dashboard');
     } else if (error) {
       console.error('Auth error:', error);
     }
@@ -22,8 +40,9 @@ const Login = () => {
 
   // Handle login button click
   const handleLogin = () => {
-    // Redirect to our backend auth endpoint
-    window.location.href = 'https://paceify.onrender.com/auth/login';
+    // Redirect to our backend auth endpoint (relative so it works in dev and prod)
+    // In dev Vite will proxy /auth to the backend; in single-port mode the server serves /auth directly.
+    window.location.href = '/auth/login';
   };
 
   return (
