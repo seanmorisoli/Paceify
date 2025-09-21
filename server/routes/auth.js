@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /auth/login → redirect to Spotify login
 router.get('/login', (req, res) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI; // must match Spotify Dashboard
+  const redirectUri = process.env.SPOTIFY_REDIRECT_URI; // frontend login page
   const scope = 'playlist-read-private playlist-modify-private playlist-modify-public';
 
   const spotifyUrl = 'https://accounts.spotify.com/authorize?' +
@@ -57,15 +57,19 @@ router.get('/callback', async (req, res) => {
       return res.status(400).json(data);
     }
 
-  const accessToken = data.access_token;
-  const refreshToken = data.refresh_token;
+    const accessToken = data.access_token;
+    const refreshToken = data.refresh_token;
+    const expiresIn = data.expires_in;
 
-  // OPTIONAL: store tokens in session or database
-  // Redirect to frontend login route with tokens in query so the Login component can pick them up
-  const frontend = process.env.FRONTEND_URL || 'http://localhost:8080';
-  const redirectParams = querystring.stringify({ access_token: accessToken, refresh_token: refreshToken });
-  // Redirect to /loginso the frontend Login.jsx will read tokens from the URL and navigate to dashboard
-  res.redirect(`${frontend.replace(/\/$/, '')}/login?${redirectParams}`);
+    // Redirect to frontend /login with tokens in query params
+    const redirectUrl = `${process.env.FRONTEND_URL}/login?` +
+      querystring.stringify({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_in: expiresIn,
+      });
+
+    res.redirect(redirectUrl);
   } catch (err) {
     console.error(err);
     res.status(500).send('Error exchanging code for token');
