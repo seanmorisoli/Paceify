@@ -8,7 +8,7 @@ export default function App() {
   return (
     <Routes>
       {/* Default route → login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* Login page */}
       <Route path="/login" element={<Login />} />
@@ -17,7 +17,7 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard />} />
 
       {/* Catch-all → go back to login */}
-      {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

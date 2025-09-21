@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/login', (req, res) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI; // frontend login page
-  const scope = 'playlist-read-private playlist-modify-private playlist-modify-public';
+  const scope = 'playlist-read-private playlist-modify-private playlist-modify-public user-library-read';
 
   const spotifyUrl = 'https://accounts.spotify.com/authorize?' +
     querystring.stringify({
