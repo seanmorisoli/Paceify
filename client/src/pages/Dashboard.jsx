@@ -198,7 +198,7 @@ const Dashboard = () => {
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value)}
                 style={{
-                  padding: '30px 10px',
+                  padding: '2px 2px',
                   borderRadius: '20px',
                   border: '2px solid white',
                   background: '#4A4A4A',
@@ -223,7 +223,7 @@ const Dashboard = () => {
                   }}
                 >
                   Pace per mile:
-                  <div style={{ display: 'flex', textAlign: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', textAlign: 'right', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <input
                       type="number"
                       value={paceMinutes}
