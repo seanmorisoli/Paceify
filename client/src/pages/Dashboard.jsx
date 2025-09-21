@@ -356,9 +356,11 @@ const Dashboard = () => {
           </div>
         </div>
 
+
         {/* Display Tracks and Playlist */}
         <SongList tracks={tracks} />
         {createdPlaylist && <PlaylistCard playlist={createdPlaylist} />}
+
       </div>
     </div>
   );
