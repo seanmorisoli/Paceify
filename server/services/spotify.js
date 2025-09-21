@@ -1,60 +1,76 @@
-import fetch from 'node-fetch';
-
 const SPOTIFY_API = 'https://api.spotify.com/v1';
 
+/**
+ * Build authorization header
+ */
 function authHeader(token) {
+  if (!token) throw new Error('Spotify access token required');
   return { Authorization: `Bearer ${token}` };
 }
 
+/**
+ * General fetch wrapper with error handling
+ */
 async function handleRequest(url, options = {}) {
   const res = await fetch(url, options);
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
     const message = data?.error?.message || res.statusText;
     const e = new Error(`Spotify API error (${res.status}): ${message}`);
     e.status = res.status;
     e.body = data;
     throw e;
   }
-  return res.json();
+
+  return data;
 }
 
 /**
- * Fetch all playlists for the current user
+ * Fetch all playlists for the user (pagination safe)
  */
-export async function getPlaylists(accessToken) {
-  const items = [];
-  let url = `${SPOTIFY_API}/me/playlists?limit=50`;
+export async function getPlaylists(accessToken, limitPerPage = 50, maxPages = 10) {
+  const playlists = [];
+  let url = `${SPOTIFY_API}/me/playlists?limit=${limitPerPage}`;
+  let pagesFetched = 0;
 
-  while (url) {
+  while (url && pagesFetched < maxPages) {
     const data = await handleRequest(url, { headers: authHeader(accessToken) });
-    items.push(...(data.items || []));
+    playlists.push(...(data.items || []));
     url = data.next;
+    pagesFetched++;
   }
 
-  return items;
+  return playlists;
 }
 
 /**
- * Fetch all tracks for a playlist
+ * Fetch all tracks for a playlist (pagination safe)
  */
-export async function getPlaylistTracks(playlistId, accessToken) {
-  const items = [];
-  let url = `${SPOTIFY_API}/playlists/${playlistId}/tracks?limit=100`;
+export async function getPlaylistTracks(playlistId, accessToken, limitPerPage = 100, maxPages = 10) {
+  const tracks = [];
+  let url = `${SPOTIFY_API}/playlists/${playlistId}/tracks?limit=${limitPerPage}`;
+  let pagesFetched = 0;
 
-  while (url) {
+  while (url && pagesFetched < maxPages) {
     const data = await handleRequest(url, { headers: authHeader(accessToken) });
-    items.push(...(data.items || []));
+    tracks.push(...(data.items || []));
     url = data.next;
+    pagesFetched++;
   }
 
-  return items;
+  return tracks;
 }
 
 /**
- * Get audio features for up to 100 track IDs at a time
+ * Get audio features in batches of 100
  */
-export async function getAudioFeatures(trackIds, accessToken) {
+export async function getAudioFeatures(trackIds = [], accessToken) {
   if (!Array.isArray(trackIds) || trackIds.length === 0) return [];
 
   const results = [];
@@ -71,63 +87,19 @@ export async function getAudioFeatures(trackIds, accessToken) {
 }
 
 /**
- * Create a new playlist
+ * Get user saved tracks (liked songs) safely with batching
  */
-export async function createPlaylist(userId, name, options = {}, accessToken) {
-  if (!userId) {
-    const me = await handleRequest(`${SPOTIFY_API}/me`, { headers: authHeader(accessToken) });
-    userId = me.id;
-  }
-
-  const body = {
-    name,
-    description: options.description || '',
-    public: !!options.public,
-  };
-
-  const url = `${SPOTIFY_API}/users/${encodeURIComponent(userId)}/playlists`;
-  return handleRequest(url, {
-    method: 'POST',
-    headers: { ...authHeader(accessToken), 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-
-/**
- * Add tracks to a playlist (max 100 per request)
- */
-export async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
-  if (!Array.isArray(trackUris) || trackUris.length === 0) return [];
-
-  const chunkSize = 100;
-  const responses = [];
-
-  for (let i = 0; i < trackUris.length; i += chunkSize) {
-    const chunk = trackUris.slice(i, i + chunkSize);
-    const url = `${SPOTIFY_API}/playlists/${encodeURIComponent(playlistId)}/tracks`;
-    const data = await handleRequest(url, {
-      method: 'POST',
-      headers: { ...authHeader(accessToken), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uris: chunk }),
-    });
-    responses.push(data);
-  }
-
-  return responses;
-}
-
-/**
- * Get all user saved tracks (liked songs) with audio features
- */
-export async function getUserSavedTracks(accessToken, limitPerPage = 50) {
+export async function getUserSavedTracks(accessToken, limitPerPage = 50, maxPages = 5) {
   let allTracks = [];
   let url = `${SPOTIFY_API}/me/tracks?limit=${limitPerPage}`;
+  let pagesFetched = 0;
 
-  while (url) {
+  while (url && pagesFetched < maxPages) {
     const data = await handleRequest(url, { headers: authHeader(accessToken) });
     const tracks = (data.items || []).map(item => item.track);
     allTracks.push(...tracks);
     url = data.next;
+    pagesFetched++;
   }
 
   // Fetch audio features in batches of 100
@@ -137,14 +109,15 @@ export async function getUserSavedTracks(accessToken, limitPerPage = 50) {
   const featuresMap = {};
   audioFeatures.forEach(f => { if (f?.id) featuresMap[f.id] = f; });
 
-  // Attach audio features
-  return allTracks.map(t => ({ ...t, audio_features: featuresMap[t.id] || null })).filter(t => t.audio_features);
+  return allTracks
+    .map(t => ({ ...t, audio_features: featuresMap[t.id] || null }))
+    .filter(t => t.audio_features);
 }
 
 /**
- * Get recommendations based on seed tracks and audio features
+ * Get track recommendations based on seeds and tempo
  */
-export async function getRecommendations(params, accessToken) {
+export async function getRecommendations(params = {}, accessToken) {
   const {
     seed_tracks = [],
     target_tempo,
@@ -173,6 +146,48 @@ export async function getRecommendations(params, accessToken) {
   const featuresMap = {};
   audioFeatures.forEach(f => { if (f?.id) featuresMap[f.id] = f; });
 
-  return tracks.map(track => ({ ...track, audio_features: featuresMap[track.id] || null, isRecommended: true }))
-               .filter(track => track.audio_features);
+  return tracks
+    .map(track => ({ ...track, audio_features: featuresMap[track.id] || null, isRecommended: true }))
+    .filter(track => track.audio_features);
+}
+
+/**
+ * Create a new playlist
+ */
+export async function createPlaylist(userId, name, options = {}, accessToken) {
+  if (!userId) {
+    const me = await handleRequest(`${SPOTIFY_API}/me`, { headers: authHeader(accessToken) });
+    userId = me.id;
+  }
+
+  const body = { name, description: options.description || '', public: !!options.public };
+  const url = `${SPOTIFY_API}/users/${encodeURIComponent(userId)}/playlists`;
+
+  return handleRequest(url, {
+    method: 'POST',
+    headers: { ...authHeader(accessToken), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Add tracks to a playlist in chunks
+ */
+export async function addTracksToPlaylist(playlistId, trackUris = [], accessToken) {
+  if (!trackUris.length) return [];
+  const chunkSize = 100;
+  const responses = [];
+
+  for (let i = 0; i < trackUris.length; i += chunkSize) {
+    const chunk = trackUris.slice(i, i + chunkSize);
+    const url = `${SPOTIFY_API}/playlists/${encodeURIComponent(playlistId)}/tracks`;
+    const data = await handleRequest(url, {
+      method: 'POST',
+      headers: { ...authHeader(accessToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: chunk }),
+    });
+    responses.push(data);
+  }
+
+  return responses;
 }
