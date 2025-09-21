@@ -14,7 +14,9 @@ const Dashboard = () => {
 
   // Authentication state
   const [accessToken, setAccessToken] = useState(() => {
-    const tokenFromUrl = searchParams.get('access_token');
+    const hash = window.location.hash; // "#access_token=XYZ&token_type=Bearer&expires_in=3600"
+    const params = new URLSearchParams(hash.replace('#', ''));
+    const tokenFromUrl = params.get('access_token');
     console.log('Initializing - tokenFromUrl:', !!tokenFromUrl);
     
     if (tokenFromUrl) {

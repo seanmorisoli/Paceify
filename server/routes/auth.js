@@ -7,17 +7,19 @@ const router = express.Router();
 
 // GET /auth/login → redirect to Spotify login
 router.get('/login', (req, res) => {
-  const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI; // frontend login page
-  const scope = 'playlist-read-private playlist-modify-private playlist-modify-public user-library-read';
+  const querystring = require('querystring');
 
-  const spotifyUrl = 'https://accounts.spotify.com/authorize?' +
-    querystring.stringify({
-      client_id: clientId,
-      response_type: 'code',
-      redirect_uri: redirectUri,
-      scope,
-    });
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const redirectUri = 'https://paceify-yzcw.onrender.com/dashboard';
+  const scope = 'playlist-modify-private playlist-modify-public user-read-private user-read-email';
+
+  const spotifyUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
+    client_id: clientId,
+    response_type: 'token', // <- this is the key change
+    redirect_uri: redirectUri,
+    scope,
+    show_dialog: true // optional, forces login prompt
+  });
 
   // Redirect user to Spotify login page
   res.redirect(spotifyUrl);
