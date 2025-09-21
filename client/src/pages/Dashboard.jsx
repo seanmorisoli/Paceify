@@ -15,18 +15,19 @@ import PlaylistCard from '../components/PlaylistCard';
  * - Automatic BPM/pace conversion
  */
 const Dashboard = () => {
-  // Get access token from URL params (from auth callback) or localStorage
+  // Commented out authentication code
+  /*
   const [searchParams] = useSearchParams();
   const [accessToken, setAccessToken] = useState(() => {
-    // First check URL params (from auth callback)
     const tokenFromUrl = searchParams.get('access_token');
     if (tokenFromUrl) {
       localStorage.setItem('spotify_access_token', tokenFromUrl);
       return tokenFromUrl;
     }
-    // Then check localStorage
     return localStorage.getItem('spotify_access_token');
   });
+  */
+  const [accessToken, setAccessToken] = useState(null); // Temporary placeholder
 
   // Core state for track management
   const [tracks, setTracks] = useState([]); // Stores filtered track results
@@ -86,15 +87,16 @@ const Dashboard = () => {
   const filterTracks = async () => {
     console.log('filterTracks called with:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     
-    // Check if we have an access token
+    // Commented out authentication check
+    /*
     if (!accessToken) {
       setError('Please authenticate with Spotify first. Redirecting...');
-      // Redirect to Spotify auth
       setTimeout(() => {
         window.location.href = '/auth/login';
       }, 2000);
       return;
     }
+    */
 
     // Normalize numeric inputs to avoid sending empty strings or out-of-range values
     const normalizedTolerance = (typeof tolerance === 'number' && !Number.isNaN(tolerance))
@@ -131,8 +133,9 @@ const Dashboard = () => {
       const response = await fetch('http://localhost:3000/filter/filter', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          'Content-Type': 'application/json'
+          // Commented out auth header
+          // 'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(payload)
       });
@@ -185,10 +188,13 @@ const Dashboard = () => {
       return;
     }
 
+    // Commented out auth check
+    /*
     if (!accessToken) {
       setError('Please authenticate with Spotify first.');
       return;
     }
+    */
 
     setCreatingPlaylist(true);
     setError(null);
@@ -213,8 +219,9 @@ const Dashboard = () => {
       const response = await fetch('/api/playlists/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          'Content-Type': 'application/json'
+          // Commented out auth header
+          // 'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(payload)
       });
@@ -288,10 +295,7 @@ const Dashboard = () => {
           Dashboard
         </h1>
 
-        {/* Show controls only when authenticated */}
-        {accessToken && (
-          <>
-            {/* Filter Controls Section - BPM and Tolerance inputs */}
+        {/* Filter Controls Section - BPM and Tolerance inputs */}
         <div style={{
           background: '#ffffffff',
           padding: '1.5rem',
@@ -615,8 +619,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-        </>
-        )}
       </div>
     </div>
   );
