@@ -205,8 +205,48 @@ const Dashboard = () => {
 
   // Auto-filter tracks on criteria change OR when access token is available
   useEffect(() => {
-    if (!accessToken) exchangeCodeForToken();
+    const initAuth = async () => {
+      // Already have token in localStorage?
+      const storedToken = localStorage.getItem('spotify_access_token');
+      if (storedToken) {
+        setAccessToken(storedToken);
+        return;
+      }
+
+      // Check for code in URL (PKCE redirect)
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (!code) return;
+
+      const codeVerifier = localStorage.getItem('spotify_code_verifier');
+      if (!codeVerifier) {
+        setError('Missing code verifier. Please login again.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, codeVerifier }),
+        });
+
+        if (!res.ok) throw new Error('Token exchange failed');
+        const data = await res.json();
+        localStorage.setItem('spotify_access_token', data.access_token);
+        setAccessToken(data.access_token);
+
+        // Clean URL
+        window.history.replaceState(null, null, window.location.pathname);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to get access token');
+      }
+    };
+
+    initAuth();
   }, []);
+
 
   return (
     <div
