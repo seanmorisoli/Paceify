@@ -1,14 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // API Configuration - automatically detects environment
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'development' 
-    ? 'http://localhost:3000' 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.MODE === 'development'
+    ? 'http://localhost:3000'
     : 'https://paceify.onrender.com');
 
 const Login = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Parse tokens from query string
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const expiresIn = params.get('expires_in');
+
+    if (accessToken) {
+      // Store tokens (could use context or secure storage later)
+      localStorage.setItem('spotify_access_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('spotify_refresh_token', refreshToken);
+      }
+      if (expiresIn) {
+        localStorage.setItem('spotify_expires_in', expiresIn);
+        // Save absolute expiry timestamp
+        const expiryTime = Date.now() + Number(expiresIn) * 1000;
+        localStorage.setItem('spotify_expiry_time', expiryTime);
+      }
+
+      // Clean up query params and go to dashboard
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleLogin = () => {
-    // Direct to backend login endpoint
+    // Redirect user to backend login endpoint
     window.location.href = `${API_BASE_URL}/auth/login`;
   };
 
