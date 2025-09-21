@@ -6,9 +6,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
-      'c1f97552bcc0.ngrok-free.app', // Shin
-      'fourthly-nymphaeaceous-therese.ngrok-free.app', // Ansel static front end
+
+      'f551ec3e9a4.ngrok-free.app','all' // your ngrok domain
     ],
-    port: 5050, // if you want to force 8080
+    port: 8080, // if you want to force 8080
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   },
 })
