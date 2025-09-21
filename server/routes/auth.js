@@ -27,11 +27,15 @@ function generateCodeChallenge(codeVerifier) {
 // GET /auth/login → return Spotify auth URL + codeVerifier
 router.get('/login', (req, res) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const redirectUri = 'https://paceify-yzcw.onrender.com/dashboard'; // must match frontend redirect
+  const redirectUri = 'https://paceify.onrender.com/dashboard';
   const scope = 'playlist-modify-private playlist-modify-public user-read-private user-read-email';
 
   const codeVerifier = generateRandomString(64);
   const codeChallenge = generateCodeChallenge(codeVerifier);
+
+  // Save codeVerifier in session or cookie
+  req.session = req.session || {};
+  req.session.codeVerifier = codeVerifier;
 
   const spotifyUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
     client_id: clientId,
@@ -43,9 +47,10 @@ router.get('/login', (req, res) => {
     show_dialog: true
   });
 
-  // Send codeVerifier + URL to frontend
-  res.json({ url: spotifyUrl, codeVerifier });
+  // Redirect browser to Spotify
+  res.redirect(spotifyUrl);
 });
+
 
 // POST /auth/token → exchange code + codeVerifier for access token
 router.post('/token', async (req, res) => {
