@@ -125,7 +125,7 @@ const Dashboard = () => {
 
       const payload = { name: playlistName, trackUris: tracks.map((t) => t.uri) };
 
-      const response = await fetch('http://localhost:3000/playlists/create', {
+      const response = await fetch(`${API_BASE_URL}/playlists/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
