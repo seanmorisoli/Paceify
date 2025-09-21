@@ -4,7 +4,9 @@ import fetch from 'node-fetch';
 import crypto from 'crypto';
 import querystring from 'querystring';
 
+
 const router = express.Router();
+const userTokens = new Map();
 
 // Utility to generate a random string
 function generateRandomString(length) {
