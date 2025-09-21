@@ -60,67 +60,90 @@ const Dashboard = () => {
 
 
   const exchangeCodeForToken = async () => {
-    // Get code from query params
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    if (!code) return; // no code in URL
+      // Get code from query params
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (!code) return; // no code in URL
 
-    const codeVerifier = localStorage.getItem('spotify_code_verifier');
-    if (!codeVerifier) {
-      setError('Missing code verifier. Please log in again.');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, codeVerifier }),
-      });
-
-      if (!res.ok) throw new Error('Token exchange failed');
-
-      const data = await res.json();
-      localStorage.setItem('spotify_access_token', data.access_token);
-      setAccessToken(data.access_token);
-
-      // Clean URL so code isn't visible
-      window.history.replaceState(null, null, window.location.pathname);
-
-    } catch (err) {
-      console.error('Token exchange error:', err);
-      setError('Failed to get Spotify access token');
-    }
-  };
-  
-  const callFilter = async () => {
-    try {
-      // Replace this with however you’re tracking the logged-in user
-      const userId = localStorage.getItem('userId') || 'demo-user';
-
-      // Fetch stored access token from backend
-      const tokenResp = await fetch(`https://paceify.onrender.com/auth/token/${userId}`);
-      const tokenData = await tokenResp.json();
-      if (!tokenData.access_token) {
-        throw new Error('No access token found for user');
+      const codeVerifier = localStorage.getItem('spotify_code_verifier');
+      if (!codeVerifier) {
+        setError('Missing code verifier. Please log in again.');
+        return;
       }
 
-      // Call backend /filter with token + pace
-      const resp = await fetch(`https://paceify.onrender.com/filter`, {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, codeVerifier }),
+        });
+
+        if (!res.ok) throw new Error('Token exchange failed');
+
+        const data = await res.json();
+        localStorage.setItem('spotify_access_token', data.access_token);
+        setAccessToken(data.access_token);
+
+        // Clean URL so code isn't visible
+        window.history.replaceState(null, null, window.location.pathname);
+
+      } catch (err) {
+        console.error('Token exchange error:', err);
+        setError('Failed to get Spotify access token');
+      }
+    };
+    
+    const callFilter = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Get the stored access token
+      const accessToken = localStorage.getItem('spotify_access_token');
+      if (!accessToken) {
+        throw new Error('No Spotify access token found. Please log in.');
+      }
+
+      // Build the payload based on current filter mode
+      const payload = filterMode === 'pace'
+        ? { paceMinutes, paceSeconds, tolerance }
+        : { targetCadence: cadence, tolerance };
+
+      // Call backend /filter endpoint
+      const resp = await fetch(`${API_BASE_URL}/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenData.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(payload),
       });
 
+      // Check for HTTP errors
+      if (!resp.ok) {
+        const text = await resp.text(); // read raw response for debugging
+        console.error('Filter API error response:', text);
+        throw new Error(`Filter API returned ${resp.status}`);
+      }
+
+      // Parse JSON response safely
       const data = await resp.json();
       console.log('Filtered tracks:', data);
-      setTracks(data.tracks || []); // assuming you have state for tracks
+
+      setTracks(data.tracks || []);
+      setApiResponse(data);
+
+      // Update cadence if returned by backend
+      if (filterMode === 'pace' && data.targetCadence) {
+        setCadence(data.targetCadence);
+      }
+
     } catch (err) {
       console.error('Error calling /filter:', err);
-      setError('Failed to fetch tracks');
+      setError(`Failed to fetch tracks: ${err.message}`);
+      setTracks([]);
+    } finally {
+      setLoading(false);
     }
   };
 
