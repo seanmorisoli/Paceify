@@ -4,6 +4,33 @@ import { getUserSavedTracks, getRecommendations } from '../services/spotify.js';
 
 const router = express.Router();
 
+async function getUserTracksWithBPM(accessToken, limit = 50) {
+    // Step 1: Fetch saved tracks
+    const savedTracksRes = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const savedTracksData = await savedTracksRes.json();
+
+    const tracks = savedTracksData.items.map(item => item.track);
+    const trackIds = tracks.map(t => t.id).join(',');
+
+    if (!trackIds) return [];
+
+    // Step 2: Fetch audio features (includes tempo/BPM)
+    const audioFeaturesRes = await fetch(`https://api.spotify.com/v1/audio-features?ids=${trackIds}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const audioFeaturesData = await audioFeaturesRes.json();
+
+    // Step 3: Combine tracks with audio features
+    const tracksWithFeatures = tracks.map((track, idx) => ({
+      ...track,
+      audio_features: audioFeaturesData.audio_features[idx] || null
+    }));
+
+    return tracksWithFeatures;
+}
+
 // Convert running pace to cadence (BPM)
 function paceToBPM(minutes, seconds = 0, strideFeet = null) {
   const totalSeconds = minutes * 60 + seconds;
@@ -38,11 +65,14 @@ router.post('/filter', async (req, res) => {
   const maxBPM = cadence + tolerance;
 
   try {
-    // 1️⃣ Fetch user's saved tracks
-    const userTracks = await getUserSavedTracks(accessToken, 50); // fetch 50 tracks
-    // 2️⃣ Filter by BPM
-    const filteredTracks = userTracks.filter(t => {
-      const bpm = t.audio_features?.tempo;
+    const userTracks = await getUserTracksWithBPM(accessToken, 50);
+
+    const minBPM = finalCadence - tolerance;
+    const maxBPM = finalCadence + tolerance;
+
+    // Filter tracks by BPM
+    const filteredTracks = userTracks.filter(track => {
+      const bpm = track.audio_features?.tempo;
       return bpm && bpm >= minBPM && bpm <= maxBPM;
     });
 
