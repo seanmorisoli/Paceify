@@ -6,8 +6,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
-      'c1f97552bcc0.ngrok-free.app', // your ngrok domain
+      'c1f97552bcc0.ngrok-free.app', // Shin
+      'fourthly-nymphaeaceous-therese.ngrok-free.app', // Ansel static front end
     ],
-    port: 8080, // if you want to force 8080
+    port: 5050, // if you want to force 8080
   },
 })
