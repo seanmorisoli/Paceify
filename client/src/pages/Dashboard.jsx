@@ -74,7 +74,7 @@ const Dashboard = () => {
       }
 
       // Call backend /filter with token + pace
-      const resp = await fetch(`https://paceify.onrender.com/filter`, {
+      const resp = await fetch(`https://paceify.onrender.com/filter/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -345,7 +345,7 @@ const Dashboard = () => {
         </h1>
 
         <button onClick={callFilter}>Generate Playlist</button>
-        
+
         {/* Filter Controls Section */}
         <div
           style={{
