@@ -288,43 +288,6 @@ const Dashboard = () => {
           Dashboard
         </h1>
 
-        {/* Show authentication prompt if no access token */}
-        {!accessToken && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '2px solid #FFD700',
-            borderRadius: '15px',
-            padding: '2rem',
-            marginBottom: '2rem',
-            textAlign: 'center',
-            maxWidth: '600px'
-          }}>
-            <h2 style={{ color: '#FFD700', marginBottom: '1rem' }}>
-              🎵 Connect with Spotify
-            </h2>
-            <p style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-              To find tracks that match your running pace, please authenticate with Spotify first.
-            </p>
-            <button
-              onClick={() => window.location.href = '/auth/login'}
-              style={{
-                backgroundColor: '#1DB954',
-                color: 'white',
-                border: 'none',
-                borderRadius: '25px',
-                padding: '12px 24px',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Connect with Spotify
-            </button>
-          </div>
-        )}
-
         {/* Show controls only when authenticated */}
         {accessToken && (
           <>
