@@ -9,11 +9,17 @@ const Dashboard = () => {
   // Authentication state
   const [accessToken, setAccessToken] = useState(() => {
     const tokenFromUrl = searchParams.get('access_token');
+    console.log('Initializing - tokenFromUrl:', !!tokenFromUrl);
+    
     if (tokenFromUrl) {
+      console.log('Found token in URL, storing in localStorage');
       localStorage.setItem('spotify_access_token', tokenFromUrl);
       return tokenFromUrl;
     }
-    return localStorage.getItem('spotify_access_token');
+    
+    const storedToken = localStorage.getItem('spotify_access_token');
+    console.log('Using stored token:', !!storedToken);
+    return storedToken;
   });
 
   // Core state
@@ -48,11 +54,15 @@ const Dashboard = () => {
 
   // Filter tracks
   const filterTracks = async () => {
+    console.log('filterTracks called with accessToken:', !!accessToken);
+    
     if (!accessToken) {
       setError('No Spotify access token found.');
+      console.log('No access token - skipping filter');
       return;
     }
 
+    console.log('Starting track filtering...');
     setLoading(true);
     setError(null);
 
@@ -129,11 +139,14 @@ const Dashboard = () => {
     }
   };
 
-  // Auto-filter tracks on criteria change
+  // Auto-filter tracks on criteria change OR when access token is available
   useEffect(() => {
-    const timeoutId = setTimeout(() => filterTracks(), 500);
-    return () => clearTimeout(timeoutId);
-  }, [filterMode, paceMinutes, paceSeconds, cadence, tolerance]);
+    console.log('useEffect triggered - accessToken:', !!accessToken, 'filterMode:', filterMode);
+    if (accessToken) {
+      const timeoutId = setTimeout(() => filterTracks(), 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [filterMode, paceMinutes, paceSeconds, cadence, tolerance, accessToken]);
 
   return (
     <div
