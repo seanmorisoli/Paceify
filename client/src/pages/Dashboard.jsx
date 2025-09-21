@@ -10,21 +10,53 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     : 'https://paceify.onrender.com');
 
 const Dashboard = () => {
-  const loginWithSpotify = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`);
-      if (!res.ok) throw new Error('Failed to start PKCE login');
+  const loginWithSpotify = () => {
+    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+    const redirectUri = 'https://paceify-yzcw.onrender.com/auth/callback';
+    const scope = 'playlist-modify-private playlist-modify-public user-read-private user-read-email';
 
-      const data = await res.json(); // { url, codeVerifier }
-      localStorage.setItem('spotify_code_verifier', data.codeVerifier);
+    // Generate code verifier (random string)
+    const codeVerifier = generateRandomString(64);
+    localStorage.setItem('spotify_code_verifier', codeVerifier);
 
-      // Redirect user to Spotify authorization page
-      window.location.href = data.url;
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Spotify login failed.');
-    }
+    // Generate code challenge (SHA256 + base64url)
+    const codeChallenge = generateCodeChallenge(codeVerifier);
+
+    // Build Spotify authorization URL
+    const authUrl = 'https://accounts.spotify.com/authorize?' +
+      new URLSearchParams({
+        client_id: clientId,
+        response_type: 'code',
+        redirect_uri: redirectUri,
+        scope,
+        code_challenge_method: 'S256',
+        code_challenge: codeChallenge,
+        show_dialog: 'true'
+      }).toString();
+
+    // Redirect user to Spotify
+    window.location.href = authUrl;
   };
+
+  // login helpers
+  function generateRandomString(length) {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+  }
+
+  function base64URLEncode(str) {
+    return btoa(String.fromCharCode(...new Uint8Array(str)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+
+  function generateCodeChallenge(codeVerifier) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    return crypto.subtle.digest('SHA-256', data).then(hash => base64URLEncode(hash));
+  }
 
 
   const exchangeCodeForToken = async () => {
