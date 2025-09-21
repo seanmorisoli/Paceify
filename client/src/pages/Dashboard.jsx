@@ -99,8 +99,26 @@ const Dashboard = () => {
 
   // Create playlist
   const createPlaylist = async () => {
+    if (!accessToken) {
+      setError('No access token available');
+      return;
+    }
+
+    if (!tracks.length) {
+      setError('No tracks to add to playlist');
+      return;
+    }
+
+    setCreatingPlaylist(true);
+    setError(null);
 
     try {
+      console.log('Creating playlist with:', {
+        name: `Running Mix - ${calculateBPMFromPace(paceMinutes, paceSeconds)} BPM`,
+        trackCount: tracks.length,
+        trackUris: tracks.map(t => t.uri).slice(0, 3) // Show first 3 for debugging
+      });
+
       const response = await fetch(`${API_BASE_URL}/playlists/create`, {
         method: 'POST',
         headers: {
@@ -113,15 +131,21 @@ const Dashboard = () => {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to create playlist');
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        console.error('Backend error:', responseData);
+        throw new Error(responseData.error || responseData.details || 'Failed to create playlist');
+      }
 
-      const playlistData = await response.json();
-      console.log('Playlist created:', playlistData);
-      setCreatedPlaylist(playlistData);
+      console.log('Playlist created successfully:', responseData);
+      setCreatedPlaylist(responseData);
 
     } catch (err) {
-      console.error(err);
-      setError(err.message);
+      console.error('Full error:', err);
+      setError(`Failed to create playlist: ${err.message}`);
+    } finally {
+      setCreatingPlaylist(false);
     }
   };
 
@@ -374,6 +398,35 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div style={{
+            background: '#ff4444',
+            color: 'white',
+            padding: '1rem',
+            borderRadius: '10px',
+            marginBottom: '1rem',
+            maxWidth: '600px',
+            textAlign: 'center'
+          }}>
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {/* Loading Display */}
+        {(loading || creatingPlaylist) && (
+          <div style={{
+            background: '#4A90E2',
+            color: 'white',
+            padding: '1rem',
+            borderRadius: '10px',
+            marginBottom: '1rem',
+            textAlign: 'center'
+          }}>
+            {loading ? 'Filtering tracks...' : 'Creating playlist...'}
+          </div>
+        )}
 
 
         {/* Display Tracks and Playlist */}

@@ -61,8 +61,8 @@ router.get('/callback', async (req, res) => {
     const refreshToken = data.refresh_token;
     const expiresIn = data.expires_in;
 
-    // Redirect to frontend /login with tokens in query params
-    const redirectUrl = `${process.env.FRONTEND_URL}/login?` +
+    // Redirect to frontend /dashboard with tokens in query params
+    const redirectUrl = `${process.env.FRONTEND_URL}/dashboard?` +
       querystring.stringify({
         access_token: accessToken,
         refresh_token: refreshToken,

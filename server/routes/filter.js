@@ -42,8 +42,10 @@ router.post('/filter', async (req, res) => {
     const userTracks = await getUserSavedTracks(accessToken, 200);
     console.log('Fetched user tracks:', userTracks.length);
 
-    const filteredTracks = userTracks;
-    // const filteredTracks = userTracks.filter(t => t.audio_features?.tempo >= minBPM && t.audio_features?.tempo <= maxBPM);
+    // Filter tracks by BPM range
+    const filteredTracks = userTracks.filter(t => 
+      t.audio_features?.tempo >= minBPM && t.audio_features?.tempo <= maxBPM
+    );
     console.log('Tracks after BPM filter:', filteredTracks.length);
 
     let finalTracks = filteredTracks;
@@ -66,17 +68,22 @@ router.post('/filter', async (req, res) => {
       console.log('Tracks after BPM filter (recommendations):', finalTracks.length);
     }
 
-    const formattedTracks = finalTracks.map(t => ({
-      id: t.id,
-      name: t.name,
-      artists: t.artists.map(a => a.name).join(', '),
-      album: t.album?.name || 'Unknown Album',
-      duration_ms: t.duration_ms,
-      bpm: t.audio_features?.tempo || null,
-      energy: t.audio_features?.energy || null,
-      danceability: t.audio_features?.danceability || null,
-      uri: t.uri
-    })).filter(t => t.bpm !== null);
+    const formattedTracks = finalTracks
+      .filter(t => t.uri && t.uri.startsWith('spotify:track:')) // Ensure valid Spotify URIs
+      .map(t => ({
+        id: t.id,
+        name: t.name,
+        artists: t.artists.map(a => a.name).join(', '),
+        album: t.album?.name || 'Unknown Album',
+        duration_ms: t.duration_ms,
+        bpm: t.audio_features?.tempo || null,
+        energy: t.audio_features?.energy || null,
+        danceability: t.audio_features?.danceability || null,
+        uri: t.uri
+      }))
+      .filter(t => t.bpm !== null);
+
+    console.log('Final formatted tracks:', formattedTracks.length);
 
     console.log('Returning tracks to frontend:', formattedTracks.length);
 
