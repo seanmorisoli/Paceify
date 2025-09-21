@@ -122,4 +122,61 @@ router.get('/client-token', async (req, res) => {
   }
 });
 
+router.post('/token', async (req, res) => {
+  try {
+    const { code, codeVerifier, userId } = req.body;
+    if (!code || !codeVerifier || !userId) {
+      return res.status(400).json({ error: 'Missing code, codeVerifier, or userId' });
+    }
+
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const redirectUri = 'https://paceify-yzcw.onrender.com/auth/callback';
+
+    const params = new URLSearchParams();
+    params.append('grant_type', 'authorization_code');
+    params.append('code', code);
+    params.append('redirect_uri', redirectUri);
+    params.append('client_id', clientId);
+    params.append('code_verifier', codeVerifier);
+
+    const resp = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      return res.status(resp.status).json(data);
+    }
+
+    // Save tokens in memory store
+    userTokens.set(userId, {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: Date.now() + data.expires_in * 1000,
+    });
+
+    res.json({
+      message: 'Tokens stored successfully',
+      access_token: data.access_token,
+      expires_in: data.expires_in,
+    });
+  } catch (err) {
+    console.error('Error in /auth/token', err);
+    res.status(500).json({ error: 'Failed to exchange code for token' });
+  }
+});
+
+/**
+ * GET /auth/token/:userId
+ * Returns the stored access token for a given user
+ */
+router.get('/token/:userId', (req, res) => {
+  const tokens = userTokens.get(req.params.userId);
+  if (!tokens) return res.status(404).json({ error: 'No tokens found for user' });
+
+  res.json(tokens);
+});
+
 export default router;

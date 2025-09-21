@@ -60,7 +60,42 @@ const Dashboard = () => {
       setError('Failed to get Spotify access token');
     }
   };
-    
+  
+  const callFilter = async () => {
+    try {
+      // Replace this with however you’re tracking the logged-in user
+      const userId = localStorage.getItem('userId') || 'demo-user';
+
+      // Fetch stored access token from backend
+      const tokenResp = await fetch(`https://paceify.onrender.com/auth/token/${userId}`);
+      const tokenData = await tokenResp.json();
+      if (!tokenData.access_token) {
+        throw new Error('No access token found for user');
+      }
+
+      // Call backend /filter with token + pace
+      const resp = await fetch(`https://paceify.onrender.com/filter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+        body: JSON.stringify({
+          paceMinutes: 8,
+          paceSeconds: 0,
+          tolerance: 10,
+        }),
+      });
+
+      const data = await resp.json();
+      console.log('Filtered tracks:', data);
+      setTracks(data.tracks || []); // assuming you have state for tracks
+    } catch (err) {
+      console.error('Error calling /filter:', err);
+      setError('Failed to fetch tracks');
+    }
+  };
+
 
 
   const [searchParams] = useSearchParams();
@@ -212,13 +247,67 @@ const Dashboard = () => {
   }
 
   // Auto-filter tracks on criteria change OR when access token is available
- useEffect(() => {
-    const tokenFromStorage = localStorage.getItem('spotify_access_token');
-    if (tokenFromStorage) {
-      setAccessToken(tokenFromStorage);
-    } else {
-      exchangeCodeForToken(); // Try exchanging PKCE code if present in URL
-    }
+  useEffect(() => {
+    // Exchanges PKCE "code" (from Spotify redirect) for tokens at your backend.
+    const exchangeCodeIfPresent = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const errorParam = params.get('error');
+        if (errorParam) {
+          // Spotify returned an error (e.g. access_denied)
+          setError(`OAuth error: ${errorParam}`);
+          // clean up URL
+          window.history.replaceState(null, null, window.location.pathname);
+          return;
+        }
+
+        const code = params.get('code');
+        if (!code) return; // nothing to do
+
+        const codeVerifier = localStorage.getItem('spotify_code_verifier');
+        if (!codeVerifier) {
+          setError('Missing PKCE code verifier — please start login again.');
+          return;
+        }
+
+        const resp = await fetch(`${API_BASE_URL}/auth/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, codeVerifier })
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || `Token endpoint returned ${resp.status}`);
+        }
+
+        const data = await resp.json();
+
+        if (!data.access_token) {
+          throw new Error('Token response missing access_token');
+        }
+
+        // Save tokens + expiry optionally
+        localStorage.setItem('spotify_access_token', data.access_token);
+        if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
+        if (data.expires_in) localStorage.setItem('spotify_expires_in', String(data.expires_in));
+
+        // update app state
+        setAccessToken(data.access_token);
+
+        // cleanup
+        localStorage.removeItem('spotify_code_verifier');
+        // remove code from URL so it isn't visible
+        const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+      } catch (err) {
+        console.error('PKCE token exchange failed', err);
+        setError('Failed to exchange code for tokens: ' + (err.message || 'unknown'));
+      }
+    };
+
+    exchangeCodeIfPresent();
+    // run once on mount
   }, []);
 
 
@@ -255,6 +344,8 @@ const Dashboard = () => {
           Dashboard
         </h1>
 
+        <button onClick={callFilter}>Generate Playlist</button>
+        
         {/* Filter Controls Section */}
         <div
           style={{
