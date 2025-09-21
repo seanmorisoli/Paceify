@@ -1,58 +1,46 @@
-const createPlaylist = async () => {
-  if (!tracks || tracks.length === 0) {
-    console.error('No tracks available to create playlist!');
-    setError('No tracks available to create playlist.');
-    return;
+// server/routes/playlists.js
+import express from 'express';
+import { createPlaylist, addTracksToPlaylist } from '../services/spotify.js';
+
+const router = express.Router();
+
+// POST /playlists/create
+router.post('/create', async (req, res) => {
+  console.log('POST /playlists/create called with body:', req.body);
+
+  const accessToken = req.headers.authorization?.replace('Bearer ', '');
+  if (!accessToken) {
+    console.warn('No access token provided');
+    return res.status(401).json({ error: 'Access token required' });
   }
 
-  // Filter out tracks without a valid URI
-  const trackUris = tracks
-    .map(t => t.uri)
-    .filter(uri => typeof uri === 'string' && uri.startsWith('spotify:track:'));
-
-  if (trackUris.length === 0) {
-    console.error('No valid track URIs found:', tracks);
-    setError('No valid track URIs found.');
-    return;
+  const { name, trackUris } = req.body;
+  if (!trackUris || trackUris.length === 0) {
+    console.warn('No track URIs provided');
+    return res.status(400).json({ error: 'No track URIs provided' });
   }
-
-  const playlistName = `Running Mix - ${calculateBPMFromPace(paceMinutes, paceSeconds)} BPM`;
-
-  console.log('Creating playlist with payload:', {
-    name: playlistName,
-    trackUris,
-  });
 
   try {
-    setCreatingPlaylist(true);
-    setError(null);
+    // Create playlist
+    const playlistData = await createPlaylist(null, name, { public: false }, accessToken);
+    console.log('Playlist created with ID:', playlistData.id);
 
-    const response = await fetch(`${API_BASE_URL}/playlists/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        name: playlistName,
-        trackUris,
-      }),
+    // Add tracks
+    await addTracksToPlaylist(playlistData.id, trackUris, accessToken);
+    console.log(`Added ${trackUris.length} tracks to playlist`);
+
+    // Return playlist info
+    res.json({
+      id: playlistData.id,
+      name: playlistData.name,
+      uri: playlistData.uri,
+      tracksCount: trackUris.length,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Playlist creation failed:', response.status, errorData);
-      throw new Error(errorData.error || 'Failed to create playlist');
-    }
-
-    const playlistData = await response.json();
-    console.log('Playlist created successfully:', playlistData);
-    setCreatedPlaylist(playlistData);
-
   } catch (err) {
-    console.error(err);
-    setError(err.message);
-  } finally {
-    setCreatingPlaylist(false);
+    console.error('Error creating playlist:', err);
+    res.status(500).json({ error: 'Failed to create playlist', details: err.message });
   }
-};
+});
+
+export default router;
