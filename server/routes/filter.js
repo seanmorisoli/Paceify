@@ -1,125 +1,6 @@
-const express = require('express');
+import express from 'express';
+import { getUserSavedTracks, getRecommendations } from '../services/spotify.js';
 const router = express.Router();
-
-// Mock track data with audio features for testing
-const mockTracks = [
-  {
-    id: 'track1',
-    name: 'Running Up That Hill',
-    artists: [{ name: 'Kate Bush' }],
-    album: { name: 'Hounds of Love' },
-    duration_ms: 298000,
-    audio_features: {
-      tempo: 125.9, // BPM
-      energy: 0.7,
-      danceability: 0.6
-    }
-  },
-  {
-    id: 'track2',
-    name: 'Eye of the Tiger',
-    artists: [{ name: 'Survivor' }],
-    album: { name: 'Eye of the Tiger' },
-    duration_ms: 246000,
-    audio_features: {
-      tempo: 109.0,
-      energy: 0.9,
-      danceability: 0.8
-    }
-  },
-  {
-    id: 'track3',
-    name: 'Don\'t Stop Believin\'',
-    artists: [{ name: 'Journey' }],
-    album: { name: 'Escape' },
-    duration_ms: 251000,
-    audio_features: {
-      tempo: 119.0,
-      energy: 0.8,
-      danceability: 0.7
-    }
-  },
-  {
-    id: 'track4',
-    name: 'Uptown Funk',
-    artists: [{ name: 'Mark Ronson', }, { name: 'Bruno Mars' }],
-    album: { name: 'Uptown Special' },
-    duration_ms: 269000,
-    audio_features: {
-      tempo: 115.0,
-      energy: 0.9,
-      danceability: 0.9
-    }
-  },
-  {
-    id: 'track5',
-    name: 'Thunderstruck',
-    artists: [{ name: 'AC/DC' }],
-    album: { name: 'The Razors Edge' },
-    duration_ms: 292000,
-    audio_features: {
-      tempo: 133.0,
-      energy: 1.0,
-      danceability: 0.6
-    }
-  }
-];
-
-// Mock recommended tracks for when user's library doesn't have matches
-const mockRecommendedTracks = [
-  {
-    id: 'rec1',
-    name: 'Pump It',
-    artists: [{ name: 'The Black Eyed Peas' }],
-    album: { name: 'Monkey Business' },
-    duration_ms: 214000,
-    audio_features: {
-      tempo: 120.0,
-      energy: 0.9,
-      danceability: 0.8
-    },
-    isRecommended: true
-  },
-  {
-    id: 'rec2',
-    name: 'Can\'t Stop the Feeling!',
-    artists: [{ name: 'Justin Timberlake' }],
-    album: { name: 'Trolls (Original Motion Picture Soundtrack)' },
-    duration_ms: 236000,
-    audio_features: {
-      tempo: 113.0,
-      energy: 0.8,
-      danceability: 0.9
-    },
-    isRecommended: true
-  },
-  {
-    id: 'rec3',
-    name: 'Good 4 U',
-    artists: [{ name: 'Olivia Rodrigo' }],
-    album: { name: 'SOUR' },
-    duration_ms: 178000,
-    audio_features: {
-      tempo: 164.0,
-      energy: 0.9,
-      danceability: 0.6
-    },
-    isRecommended: true
-  },
-  {
-    id: 'rec4',
-    name: 'Levitating',
-    artists: [{ name: 'Dua Lipa' }],
-    album: { name: 'Future Nostalgia' },
-    duration_ms: 203000,
-    audio_features: {
-      tempo: 103.0,
-      energy: 0.8,
-      danceability: 0.8
-    },
-    isRecommended: true
-  }
-];
 
 // Function to convert running pace to cadence (BPM)
 // Uses actual running science: pace -> speed -> cadence based on stride length
@@ -170,8 +51,19 @@ router.post('/filter', async (req, res) => {
       // New pace input options
       paceMinutes,
       paceSeconds,
-      strideLengthFeet // User's stride length in feet
+      strideLengthFeet, // User's stride length in feet
+      // Auth token - should be extracted from headers in production
+      access_token
     } = req.body;
+
+    // Extract access token from Authorization header or request body
+    const accessToken = req.headers.authorization?.replace('Bearer ', '') || access_token;
+    
+    if (!accessToken) {
+      return res.status(401).json({ 
+        error: 'Access token required. Please authenticate with Spotify first.' 
+      });
+    }
 
     let finalCadence;
 
@@ -207,51 +99,108 @@ router.post('/filter', async (req, res) => {
     const minBPM = finalCadence - tolerance;
     const maxBPM = finalCadence + tolerance;
 
-    // Filter mock tracks by BPM (in real implementation, this would fetch from Spotify)
-    const filteredTracks = mockTracks.filter(track => {
-      const bpm = track.audio_features.tempo;
-      return bpm >= minBPM && bpm <= maxBPM;
-    });
-
-    let finalTracks = filteredTracks;
-    let recommendationsAdded = 0;
-
-    // If no matches found, add recommendations
-    if (filteredTracks.length === 0) {
-      console.log('No tracks found in user library, adding recommendations...');
+    try {
+      // Fetch user's saved tracks from Spotify
+      console.log('Fetching user saved tracks from Spotify...');
+      const userTracks = await getUserSavedTracks(accessToken, 200); // Fetch up to 200 liked songs
       
-      const recommendedTracks = mockRecommendedTracks.filter(track => {
-        const bpm = track.audio_features.tempo;
-        return bpm >= minBPM && bpm <= maxBPM;
+      // Filter user tracks by BPM range
+      const filteredTracks = userTracks.filter(track => {
+        const bpm = track.audio_features?.tempo;
+        return bpm && bpm >= minBPM && bpm <= maxBPM;
       });
+
+      let finalTracks = filteredTracks;
+      let recommendationsAdded = 0;
+      let totalUserTracks = userTracks.length;
+
+      // If no matches found in user library, get recommendations
+      if (filteredTracks.length === 0) {
+        console.log('No tracks found in user library, fetching recommendations...');
+        
+        // Get seed tracks from user's library (any 5 tracks for seeding)
+        const seedTrackIds = userTracks.slice(0, 5).map(track => track.id);
+        
+        const recommendationParams = {
+          seed_tracks: seedTrackIds,
+          target_tempo: finalCadence,
+          min_tempo: minBPM,
+          max_tempo: maxBPM,
+          min_energy: 0.4, // Good for running
+          target_energy: 0.7,
+          limit: 20
+        };
+
+        // If no user tracks available, use genre seeds instead
+        if (seedTrackIds.length === 0) {
+          delete recommendationParams.seed_tracks;
+          recommendationParams.seed_genres = 'pop,rock,electronic,hip-hop,dance';
+        }
+
+        const recommendedTracks = await getRecommendations(recommendationParams, accessToken);
+        
+        // Filter recommendations by BPM range (double check)
+        const filteredRecommendations = recommendedTracks.filter(track => {
+          const bpm = track.audio_features?.tempo;
+          return bpm && bpm >= minBPM && bpm <= maxBPM;
+        });
+        
+        finalTracks = filteredRecommendations;
+        recommendationsAdded = filteredRecommendations.length;
+      }
+
+      // Format response with relevant info for frontend
+      const formattedTracks = finalTracks.map(track => ({
+        id: track.id,
+        name: track.name,
+        artists: Array.isArray(track.artists) 
+          ? track.artists.map(artist => artist.name).join(', ')
+          : 'Unknown Artist',
+        album: track.album?.name || 'Unknown Album',
+        duration_ms: track.duration_ms,
+        bpm: track.audio_features ? Math.round(track.audio_features.tempo * 10) / 10 : null,
+        energy: track.audio_features?.energy || null,
+        danceability: track.audio_features?.danceability || null,
+        isRecommended: track.isRecommended || false,
+        uri: track.uri // Include Spotify URI for playlist creation
+      })).filter(track => track.bpm !== null); // Only include tracks with valid audio features
+
+      res.json({
+        targetCadence: finalCadence,
+        originalPace: paceMinutes ? `${paceMinutes}:${(paceSeconds || 0).toString().padStart(2, '0')}` : null,
+        tolerance,
+        bpmRange: `${minBPM}-${maxBPM}`,
+        totalTracks: totalUserTracks,
+        filteredCount: filteredTracks.length,
+        recommendationsAdded,
+        tracks: formattedTracks
+      });
+
+    } catch (spotifyError) {
+      console.error('Spotify API Error:', spotifyError);
       
-      finalTracks = recommendedTracks;
-      recommendationsAdded = recommendedTracks.length;
+      // Handle specific Spotify API errors
+      if (spotifyError.status === 401) {
+        return res.status(401).json({ 
+          error: 'Invalid or expired access token. Please re-authenticate with Spotify.' 
+        });
+      }
+      
+      if (spotifyError.status === 403) {
+        return res.status(403).json({ 
+          error: 'Insufficient permissions. Please ensure you have granted the required scopes.' 
+        });
+      }
+
+      if (spotifyError.status === 429) {
+        return res.status(429).json({ 
+          error: 'Rate limited by Spotify API. Please try again later.' 
+        });
+      }
+
+      // Fallback to generic error
+      throw spotifyError;
     }
-
-    // Format response with relevant info for frontend
-    const formattedTracks = finalTracks.map(track => ({
-      id: track.id,
-      name: track.name,
-      artists: track.artists.map(artist => artist.name).join(', '),
-      album: track.album.name,
-      duration_ms: track.duration_ms,
-      bpm: Math.round(track.audio_features.tempo * 10) / 10, // Round to 1 decimal
-      energy: track.audio_features.energy,
-      danceability: track.audio_features.danceability,
-      isRecommended: track.isRecommended || false
-    }));
-
-    res.json({
-      targetCadence: finalCadence,
-      originalPace: paceMinutes ? `${paceMinutes}:${(paceSeconds || 0).toString().padStart(2, '0')}` : null,
-      tolerance,
-      bpmRange: `${minBPM}-${maxBPM}`,
-      totalTracks: mockTracks.length,
-      filteredCount: filteredTracks.length,
-      recommendationsAdded,
-      tracks: formattedTracks
-    });
 
   } catch (error) {
     console.error('Error filtering tracks:', error);
@@ -263,8 +212,11 @@ router.post('/filter', async (req, res) => {
 router.get('/test', (req, res) => {
   res.json({ 
     message: 'Filter service is working!',
-    mockTracksCount: mockTracks.length,
-    sampleTrack: mockTracks[0]
+    info: 'Real Spotify API integration enabled',
+    endpoints: [
+      'POST /filter/filter - Filter tracks by pace or BPM (requires access token)',
+      'GET /filter/pace-table - Show pace to BPM conversion table'
+    ]
   });
 });
 
@@ -294,4 +246,4 @@ router.get('/pace-table', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

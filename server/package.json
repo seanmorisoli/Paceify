@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend server for Paceify - BPM-based playlist filtering app",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
@@ -13,6 +14,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "node-fetch": "^3.3.2",
     "querystring": "^0.2.1"
   },
   "devDependencies": {
