@@ -9,6 +9,7 @@ app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 
 // Mount routes
+
 app.use('/auth', authRoutes);
 app.use('/playlists', playlistRoutes);
 app.use('/filter', filterRoutes);
