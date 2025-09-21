@@ -99,4 +99,27 @@ router.get('/callback', async (req, res) => {
   }
 });
 
+router.get('/client-token', async (req, res) => {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+  const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  try {
+    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${authString}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials'
+    });
+    const data = await tokenRes.json();
+    res.json(data); // { access_token, token_type, expires_in }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to get client token' });
+  }
+});
+
 export default router;
