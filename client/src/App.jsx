@@ -7,8 +7,8 @@ import Dashboard from './pages/Dashboard';
 export default function App() {
   return (
     <Routes>
-      {/* Default route → Dashboard */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* Default route → login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Login page */}
       <Route path="/login" element={<Login />} />
