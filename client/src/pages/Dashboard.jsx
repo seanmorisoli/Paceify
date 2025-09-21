@@ -94,58 +94,50 @@ const Dashboard = () => {
     };
     
     const callFilter = async () => {
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      // Get the stored access token
-      const accessToken = localStorage.getItem('spotify_access_token');
-      if (!accessToken) {
-        throw new Error('No Spotify access token found. Please log in.');
+      try {
+        // Prefer state token, fallback to localStorage
+        const token = accessToken || localStorage.getItem('spotify_access_token');
+        if (!token) {
+          setError('No Spotify access token found. Please log in first.');
+          return; // early exit
+        }
+
+        // Build payload based on filter mode
+        const payload = filterMode === 'pace'
+          ? { paceMinutes, paceSeconds, tolerance }
+          : { targetCadence: cadence, tolerance };
+
+        const resp = await fetch(`${API_BASE_URL}/filter`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.error('Filter API error response:', text);
+          throw new Error(`Filter API returned ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        setTracks(data.tracks || []);
+        setApiResponse(data);
+
+        if (filterMode === 'pace' && data.targetCadence) setCadence(data.targetCadence);
+      } catch (err) {
+        console.error('Error calling /filter:', err);
+        setError(`Failed to fetch tracks: ${err.message}`);
+        setTracks([]);
+      } finally {
+        setLoading(false);
       }
-
-      // Build the payload based on current filter mode
-      const payload = filterMode === 'pace'
-        ? { paceMinutes, paceSeconds, tolerance }
-        : { targetCadence: cadence, tolerance };
-
-      // Call backend /filter endpoint
-      const resp = await fetch(`${API_BASE_URL}/filter`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      // Check for HTTP errors
-      if (!resp.ok) {
-        const text = await resp.text(); // read raw response for debugging
-        console.error('Filter API error response:', text);
-        throw new Error(`Filter API returned ${resp.status}`);
-      }
-
-      // Parse JSON response safely
-      const data = await resp.json();
-      console.log('Filtered tracks:', data);
-
-      setTracks(data.tracks || []);
-      setApiResponse(data);
-
-      // Update cadence if returned by backend
-      if (filterMode === 'pace' && data.targetCadence) {
-        setCadence(data.targetCadence);
-      }
-
-    } catch (err) {
-      console.error('Error calling /filter:', err);
-      setError(`Failed to fetch tracks: ${err.message}`);
-      setTracks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
 
 
