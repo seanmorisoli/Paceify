@@ -524,6 +524,20 @@ const Dashboard = () => {
             </span>
           ))}
         </button>
+        <button
+          onClick={fetchPublicPlaylist}
+          style={{
+            padding: '1rem',
+            borderRadius: '25px',
+            background: '#FF6347',
+            color: 'white',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            marginBottom: '1rem'
+          }}
+        >
+          Load Public Playlist (No Login)
+        </button>
 
         {/* Keep SongList display below if desired */}
         <SongList tracks={tracks} />
