@@ -32,26 +32,23 @@ const Dashboard = () => {
 
   // Handle token extraction from URL on mount
   useEffect(() => {
-    const tokenFromUrl = searchParams.get('access_token');
-    const refreshTokenFromUrl = searchParams.get('refresh_token');
-    const expiresInFromUrl = searchParams.get('expires_in');
-    
-    if (tokenFromUrl && !accessToken) {
-      console.log('Extracting tokens from URL');
-      localStorage.setItem('spotify_access_token', tokenFromUrl);
-      if (refreshTokenFromUrl) {
-        localStorage.setItem('spotify_refresh_token', refreshTokenFromUrl);
+    // Get token from URL fragment
+    const hash = window.location.hash; // e.g., #access_token=ABC123&token_type=Bearer&expires_in=3600
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1)); // remove leading '#'
+      const token = params.get('access_token');
+      if (token) {
+        setAccessToken(token);
+        localStorage.setItem('spotify_access_token', token);
+        // Remove the fragment from URL for cleanliness
+        window.history.replaceState(null, null, window.location.pathname);
       }
-      if (expiresInFromUrl) {
-        const expiryTime = Date.now() + Number(expiresInFromUrl) * 1000;
-        localStorage.setItem('spotify_expiry_time', expiryTime.toString());
-      }
-      setAccessToken(tokenFromUrl);
-      
-      // Clean up URL by removing the search params
-      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      // If no token in URL, try localStorage
+      const storedToken = localStorage.getItem('spotify_access_token');
+      if (storedToken) setAccessToken(storedToken);
     }
-  }, [searchParams, accessToken]);
+  }, []);
 
   // Core state
   const [tracks, setTracks] = useState([]);
