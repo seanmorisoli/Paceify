@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
+
       'f551ec3e9a4.ngrok-free.app','all' // your ngrok domain
     ],
     port: 8080, // if you want to force 8080
