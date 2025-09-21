@@ -17,7 +17,7 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard />} />
 
       {/* Catch-all → go back to login */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
