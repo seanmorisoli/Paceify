@@ -315,7 +315,7 @@ const Dashboard = () => {
                 onChange={e => setFilterMode(e.target.value)}
                 style={{
                   padding: '8px 15px',
-                  borderRadius: '25px',
+                  borderRadius: '20px',
                   border: '2px solid white',
                   background: '#4A4A4A',
                   fontSize: '1.1rem',
@@ -335,7 +335,7 @@ const Dashboard = () => {
                 alignItems: 'center',
                 gap: '1rem'
               }}>
-                <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
+                <label style={{ fontSize: '1.1rem', alignItems: 'center', fontWeight: 'bold', color: '#4A4A4A' }}>
                   Pace per mile:
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <input
@@ -404,7 +404,7 @@ const Dashboard = () => {
                   textAlign: 'center'
                 }}>
                   <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
-                  <div style={{ fontSize: '0.8rem' }}>
+                  <div style={{ fontSize: '0.8rem', allignItems: 'center' }}>
                     ({paceMinutes}:{(paceSeconds || 0).toString().padStart(2, '0')}/mile)
                   </div>
                 </div>
