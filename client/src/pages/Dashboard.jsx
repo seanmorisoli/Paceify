@@ -27,10 +27,14 @@ const Dashboard = () => {
   };
 
 
-  const exchangeToken = async (code) => {
+  const exchangeCodeForToken = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code) return; // no code in URL
+
     const codeVerifier = localStorage.getItem('spotify_code_verifier');
     if (!codeVerifier) {
-      setError('Missing code verifier. Please login again.');
+      setError('Missing code verifier. Please log in again.');
       return;
     }
 
@@ -47,14 +51,17 @@ const Dashboard = () => {
       localStorage.setItem('spotify_access_token', data.access_token);
       setAccessToken(data.access_token);
 
+      // clean URL
+      window.history.replaceState(null, null, window.location.pathname);
+
     } catch (err) {
-      console.error('Token exchange error:', err);
-      setError('Failed to get Spotify access token.');
+      console.error(err);
+      setError('Failed to get access token');
     }
   };
 
 
-  
+    
 
 
   const [searchParams] = useSearchParams();
@@ -198,14 +205,8 @@ const Dashboard = () => {
 
   // Auto-filter tracks on criteria change OR when access token is available
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-
-    if (code && !accessToken) {
-      exchangeToken(code);
-    }
-  }, [accessToken]);
-
+    if (!accessToken) exchangeCodeForToken();
+  }, []);
 
   return (
     <div
