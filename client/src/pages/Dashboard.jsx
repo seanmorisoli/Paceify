@@ -160,7 +160,7 @@ const Dashboard = () => {
             fontWeight: 'bold',
           }}
         >
-          Dashboard
+          Dash board
         </h1>
 
         {/* Filter Controls Section */}
