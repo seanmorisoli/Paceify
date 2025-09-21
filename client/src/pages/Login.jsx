@@ -5,24 +5,27 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Handle the callback from Spotify
   useEffect(() => {
+    // Parse tokens from query parameters
     const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
     const error = searchParams.get('error');
 
     if (accessToken) {
-      // Store the token
+      // Store tokens in localStorage
       localStorage.setItem('spotify_access_token', accessToken);
+      if (refreshToken) localStorage.setItem('spotify_refresh_token', refreshToken);
+
       // Redirect to dashboard
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else if (error) {
-      console.error('Auth error:', error);
+      console.error('Spotify Auth Error:', error);
     }
   }, [searchParams, navigate]);
 
-  // Handle login button click
+  // Redirect to backend login route
   const handleLogin = () => {
-    // Redirect to our backend auth endpoint
+    // Your backend auth endpoint should handle Spotify OAuth
     window.location.href = 'https://paceify.onrender.com/auth/login';
   };
 
@@ -33,7 +36,7 @@ const Login = () => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)', // Light blue to steel blue gradient
+      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
       color: 'white',
     }}>
       <h1 style={{ 
@@ -48,7 +51,7 @@ const Login = () => {
       <button
         onClick={handleLogin}
         style={{
-          backgroundColor: '#4A4A4A', // Dark gray
+          backgroundColor: '#4A4A4A',
           color: 'white',
           border: '2px solid white',
           borderRadius: '25px',
