@@ -61,7 +61,17 @@ const Dashboard = () => {
     }
   };
 
-
+  const fetchPublicPlaylist = async () => {
+    try {
+      const playlistId = '37i9dQZF1DXcBWIGoYBM5M'; // Example: Spotify "Today's Top Hits"
+      const res = await fetch(`${API_BASE_URL}/public/playlist/${playlistId}`);
+      const data = await res.json();
+      setTracks(data.tracks); // use your existing state
+    } catch (err) {
+      console.error('Failed to fetch public playlist', err);
+      setError('Could not load public playlist');
+    }
+  };
     
 
 

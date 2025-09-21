@@ -26,6 +26,41 @@ function generateCodeChallenge(codeVerifier) {
   );
 }
 
+router.get('/playlist/:id', async (req, res) => {
+  try {
+    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')
+      },
+      body: querystring.stringify({ grant_type: 'client_credentials' })
+    });
+
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    const playlistId = req.params.id;
+    const playlistRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+
+    const playlistData = await playlistRes.json();
+    // Map only the data your frontend needs
+    const tracks = playlistData.items.map(item => ({
+      id: item.track.id,
+      name: item.track.name,
+      artists: item.track.artists,
+      uri: item.track.uri
+    }));
+
+    res.json({ tracks });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to fetch public playlist');
+  }
+});
+
 // GET /auth/login → redirect user to Spotify login
 router.get('/login', (req, res) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
