@@ -13,17 +13,19 @@ const Dashboard = () => {
   const loginWithSpotify = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`);
-      if (!res.ok) throw new Error('Failed to get PKCE code verifier');
+      if (!res.ok) throw new Error('Failed to start PKCE login');
 
-      const data = await res.json();
+      const data = await res.json(); // expects { url: string, codeVerifier: string }
       localStorage.setItem('spotify_code_verifier', data.codeVerifier);
-      // Redirect user to Spotify authorization page
+
+      // Redirect user to Spotify auth page
       window.location.href = data.url;
     } catch (err) {
       console.error('Login error:', err);
       setError('Spotify login failed.');
     }
   };
+
 
   const exchangeToken = async (code) => {
     const codeVerifier = localStorage.getItem('spotify_code_verifier');
@@ -45,13 +47,12 @@ const Dashboard = () => {
       localStorage.setItem('spotify_access_token', data.access_token);
       setAccessToken(data.access_token);
 
-      // Remove query params from URL
-      window.history.replaceState(null, null, window.location.pathname);
     } catch (err) {
       console.error('Token exchange error:', err);
       setError('Failed to get Spotify access token.');
     }
   };
+
 
   
 
@@ -200,12 +201,19 @@ const Dashboard = () => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
 
+    // Only exchange code if we don't already have an access token
     if (code && !accessToken) {
-      exchangeToken(code);
+      exchangeToken(code).then(() => {
+        // Clear query params from URL after successful exchange
+        window.history.replaceState(null, null, window.location.pathname);
+      });
+    } else if (!accessToken) {
+      // If no code and no token, trigger login
+      loginWithSpotify();
     }
   }, [accessToken]);
 
-  
+
   return (
     <div
       style={{
