@@ -130,9 +130,7 @@ export async function getUserSavedTracks(accessToken, limit = 50) {
   let fetched = 0;
 
   while (url && fetched < limit) {
-    const data = await handleRequest(
-      axios.get(url, { headers: authHeader(accessToken) })
-    );
+    const data = await handleRequest(url, { headers: authHeader(accessToken) });
     
     const tracks = (data.items || []).map(item => item.track).filter(track => track && track.id);
     items.push(...tracks);
@@ -203,9 +201,7 @@ export async function getRecommendations(params, accessToken) {
   }
 
   const url = `${SPOTIFY_API}/recommendations?${new URLSearchParams(queryParams).toString()}`;
-  const data = await handleRequest(
-    axios.get(url, { headers: authHeader(accessToken) })
-  );
+  const data = await handleRequest(url, { headers: authHeader(accessToken) });
 
   const tracks = data.tracks || [];
   
