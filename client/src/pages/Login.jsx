@@ -39,7 +39,7 @@ const Login = () => {
   // Redirect to backend login route
   const handleLogin = () => {
     // Use your backend endpoint for OAuth login
-    window.location.href = '/auth/login';
+    window.location.href = 'https://paceify.onrender.com/auth/login';
   };
 
   return (
