@@ -209,6 +209,7 @@ const Dashboard = () => {
       setCreatingPlaylist(false);
     }
   };
+  }
 
   // Auto-filter tracks on criteria change OR when access token is available
  useEffect(() => {
@@ -530,8 +531,9 @@ const Dashboard = () => {
       </div>
     </div>
   );
+
 };
-}
+
 
 export default Dashboard
 
