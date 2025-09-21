@@ -10,7 +10,7 @@ router.get('/login', (req, res) => {
   const querystring = require('querystring');
 
   const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const redirectUri = 'https://paceify-yzcw.onrender.com/dashboard';
+  const redirectUri = 'https://paceify.onrender.com/auth/callback';
   const scope = 'playlist-modify-private playlist-modify-public user-read-private user-read-email';
 
   const spotifyUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
