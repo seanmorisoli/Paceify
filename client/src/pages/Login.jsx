@@ -55,20 +55,24 @@ const Login = () => {
     }
   }, [navigate]);
 
-  const handleLogin = async () => {
-    // Request backend to generate Spotify auth URL with PKCE
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`);
-      if (!res.ok) throw new Error('Failed to get login URL');
+  // const handleLogin = async () => {
+  //   // Request backend to generate Spotify auth URL with PKCE
+  //   try {
+  //     const res = await fetch(`${API_BASE_URL}/auth/login`);
+  //     if (!res.ok) throw new Error('Failed to get login URL');
 
-      const data = await res.json();
-      // Save code verifier for PKCE
-      if (data.codeVerifier) localStorage.setItem('spotify_code_verifier', data.codeVerifier);
-      // Redirect to Spotify auth
-      window.location.href = data.url;
-    } catch (err) {
-      console.error('Login failed:', err);
-    }
+  //     const data = await res.json();
+  //     // Save code verifier for PKCE
+  //     if (data.codeVerifier) localStorage.setItem('spotify_code_verifier', data.codeVerifier);
+  //     // Redirect to Spotify auth
+  //     window.location.href = data.url;
+  //   } catch (err) {
+  //     console.error('Login failed:', err);
+  //   }
+  // };
+
+  const handleLogin = () => {
+    window.location.href = `${API_BASE_URL}/auth/login`;
   };
 
   return (
