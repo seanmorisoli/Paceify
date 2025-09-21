@@ -1,253 +1,113 @@
 import express from 'express';
+import fetch from 'node-fetch';
 import { getUserSavedTracks, getRecommendations } from '../services/spotify.js';
+
 const router = express.Router();
 
-// Function to convert running pace to cadence (BPM)
-// Uses actual running science: pace -> speed -> cadence based on stride length
-function paceToStepsPerMinute(paceMinutes, paceSeconds = 0, strideLengthFeet = null) {
-  // Convert pace to total seconds per mile
-  const totalSecondsPerMile = (paceMinutes * 60) + paceSeconds;
-  
-  // Convert to speed in miles per minute
-  const milesPerMinute = 1 / (totalSecondsPerMile / 60);
-  
-  // Convert to miles per hour for reference
+// Convert running pace to cadence (BPM)
+function paceToBPM(minutes, seconds = 0, strideFeet = null) {
+  const totalSeconds = minutes * 60 + seconds;
+  const milesPerMinute = 1 / (totalSeconds / 60);
   const mph = milesPerMinute * 60;
-  
-  // Estimate stride length if not provided
-  let estimatedStrideFeet;
-  if (!strideLengthFeet) {
-    if (mph >= 8.0) {
-      estimatedStrideFeet = 3.5; // Fast runner, longer stride
-    } else if (mph >= 6.5) {
-      estimatedStrideFeet = 3.2; // Moderate pace
-    } else if (mph >= 5.0) {
-      estimatedStrideFeet = 3.0; // Casual jogging (10:30 pace falls here)
-    } else {
-      estimatedStrideFeet = 2.8; // Walking/very slow
-    }
-  } else {
-    estimatedStrideFeet = strideLengthFeet;
+
+  let stride = strideFeet;
+  if (!stride) {
+    stride = mph >= 8 ? 3.5 : mph >= 6.5 ? 3.2 : mph >= 5 ? 3 : 2.8;
   }
-  
-  // Calculate cadence: speed × feet per mile / stride length
-  const cadence = (milesPerMinute * 5280) / estimatedStrideFeet;
-  
-  // Round to nearest whole number
-  const finalCadence = Math.round(cadence);
-  
-  console.log(`Pace calculation: ${paceMinutes}:${paceSeconds.toString().padStart(2, '0')} → ${mph.toFixed(1)} mph → ${finalCadence} SPM (stride: ${estimatedStrideFeet}ft)`);
-  
-  return finalCadence;
+
+  return Math.round((milesPerMinute * 5280) / stride);
 }
 
-// POST /filter - Filter tracks by running cadence (BPM)
+// POST /filter/filter
 router.post('/filter', async (req, res) => {
+  const { paceMinutes, paceSeconds, targetCadence, tolerance = 10, access_token } = req.body;
+  const accessToken = req.headers.authorization?.replace('Bearer ', '') || access_token;
+
+  if (!accessToken) return res.status(401).json({ error: 'Access token required' });
+
+  let cadence;
+  if (paceMinutes !== undefined) {
+    cadence = paceToBPM(paceMinutes, paceSeconds);
+  } else if (targetCadence) {
+    cadence = targetCadence;
+  } else {
+    return res.status(400).json({ error: 'Provide pace or targetCadence' });
+  }
+
+  const minBPM = cadence - tolerance;
+  const maxBPM = cadence + tolerance;
+
   try {
-    const { 
-      playlistId, 
-      targetCadence, 
-      tolerance = 10,
-      // New pace input options
-      paceMinutes,
-      paceSeconds,
-      strideLengthFeet, // User's stride length in feet
-      // Auth token - should be extracted from headers in production
-      access_token
-    } = req.body;
-    console.log('--- /filter request received ---');
-    console.log('Request body:', req.body);
-    console.log('Access token from header/body:', accessToken ? '✅ present' : '❌ missing');
+    // 1️⃣ Fetch user's saved tracks
+    const userTracks = await getUserSavedTracks(accessToken, 50); // fetch 50 tracks
+    // 2️⃣ Filter by BPM
+    const filteredTracks = userTracks.filter(t => {
+      const bpm = t.audio_features?.tempo;
+      return bpm && bpm >= minBPM && bpm <= maxBPM;
+    });
 
-
-    // Extract access token from Authorization header or request body
-    const accessToken = req.headers.authorization?.replace('Bearer ', '') || access_token;
-    
-    if (!accessToken) {
-      return res.status(401).json({ 
-        error: 'Access token required. Please authenticate with Spotify first.' 
-      });
+    // 3️⃣ If no tracks, fetch recommendations
+    let finalTracks = filteredTracks;
+    if (filteredTracks.length === 0) {
+      const seedIds = userTracks.slice(0, 5).map(t => t.id);
+      const recommended = await getRecommendations(
+        { seed_tracks: seedIds, target_tempo: cadence, min_tempo: minBPM, max_tempo: maxBPM, limit: 20 },
+        accessToken
+      );
+      finalTracks = recommended.filter(t => t.audio_features?.tempo >= minBPM && t.audio_features?.tempo <= maxBPM);
     }
 
-    let finalCadence;
+    res.json({
+      tracks: finalTracks.map(t => ({
+        id: t.id,
+        name: t.name,
+        artists: t.artists.map(a => a.name).join(', '),
+        album: t.album.name,
+        duration_ms: t.duration_ms,
+        bpm: Math.round(t.audio_features.tempo),
+        uri: t.uri
+      })),
+      cadence,
+      bpmRange: `${minBPM}-${maxBPM}`
+    });
 
-    // Option 1: User provides pace (preferred)
-    if (paceMinutes !== undefined) {
-      const seconds = paceSeconds || 0;
-      finalCadence = paceToStepsPerMinute(paceMinutes, seconds, strideLengthFeet);
-    }
-    // Option 2: User provides BPM directly (fallback)
-    else if (targetCadence) {
-      finalCadence = targetCadence;
-      console.log(`Using direct BPM input: ${finalCadence}`);
-    }
-    // Option 3: No valid input
-    else {
-      return res.status(400).json({ 
-        error: 'Either pace (paceMinutes, paceSeconds) or targetCadence is required',
-        examples: {
-          paceExample: { 
-            paceMinutes: 10, 
-            paceSeconds: 30,
-            strideLengthFeet: 3.5 // optional
-          },
-          bpmExample: { targetCadence: 165 }
-        },
-        note: "Pace like 10:30 per mile gets converted to ~165 BPM based on estimated stride length"
-      });
-    }
-
-    console.log(`Filtering tracks for cadence: ${finalCadence} ± ${tolerance} BPM`);
-
-    // Calculate BPM range
-    const minBPM = finalCadence - tolerance;
-    const maxBPM = finalCadence + tolerance;
-
-    try {
-      // Fetch user's saved tracks from Spotify
-      console.log('Fetching user saved tracks from Spotify...');
-      const userTracks = await getUserSavedTracks(accessToken, 200); // Fetch up to 200 liked songs
-      
-      // Filter user tracks by BPM range
-      const filteredTracks = userTracks.filter(track => {
-        const bpm = track.audio_features?.tempo;
-        return bpm && bpm >= minBPM && bpm <= maxBPM;
-      });
-
-      let finalTracks = filteredTracks;
-      let recommendationsAdded = 0;
-      let totalUserTracks = userTracks.length;
-
-      // If no matches found in user library, get recommendations
-      if (filteredTracks.length === 0) {
-        console.log('No tracks found in user library, fetching recommendations...');
-        
-        // Get seed tracks from user's library (any 5 tracks for seeding)
-        const seedTrackIds = userTracks.slice(0, 5).map(track => track.id);
-        
-        const recommendationParams = {
-          seed_tracks: seedTrackIds,
-          target_tempo: finalCadence,
-          min_tempo: minBPM,
-          max_tempo: maxBPM,
-          min_energy: 0.4, // Good for running
-          target_energy: 0.7,
-          limit: 20
-        };
-
-        // If no user tracks available, use genre seeds instead
-        if (seedTrackIds.length === 0) {
-          delete recommendationParams.seed_tracks;
-          recommendationParams.seed_genres = 'pop,rock,electronic,hip-hop,dance';
-        }
-
-        const recommendedTracks = await getRecommendations(recommendationParams, accessToken);
-        
-        // Filter recommendations by BPM range (double check)
-        const filteredRecommendations = recommendedTracks.filter(track => {
-          const bpm = track.audio_features?.tempo;
-          return bpm && bpm >= minBPM && bpm <= maxBPM;
-        });
-        
-        finalTracks = filteredRecommendations;
-        recommendationsAdded = filteredRecommendations.length;
-      }
-
-      // Format response with relevant info for frontend
-      const formattedTracks = finalTracks.map(track => ({
-        id: track.id,
-        name: track.name,
-        artists: Array.isArray(track.artists) 
-          ? track.artists.map(artist => artist.name).join(', ')
-          : 'Unknown Artist',
-        album: track.album?.name || 'Unknown Album',
-        duration_ms: track.duration_ms,
-        bpm: track.audio_features ? Math.round(track.audio_features.tempo * 10) / 10 : null,
-        energy: track.audio_features?.energy || null,
-        danceability: track.audio_features?.danceability || null,
-        isRecommended: track.isRecommended || false,
-        uri: track.uri // Include Spotify URI for playlist creation
-      })).filter(track => track.bpm !== null); // Only include tracks with valid audio features
-
-      res.json({
-        targetCadence: finalCadence,
-        originalPace: paceMinutes ? `${paceMinutes}:${(paceSeconds || 0).toString().padStart(2, '0')}` : null,
-        tolerance,
-        bpmRange: `${minBPM}-${maxBPM}`,
-        totalTracks: totalUserTracks,
-        filteredCount: filteredTracks.length,
-        recommendationsAdded,
-        tracks: formattedTracks
-      });
-
-    } catch (spotifyError) {
-      console.error('Spotify API Error:', spotifyError);
-      
-      // Handle specific Spotify API errors
-      if (spotifyError.status === 401) {
-        return res.status(401).json({ 
-          error: 'Invalid or expired access token. Please re-authenticate with Spotify.' 
-        });
-      }
-      
-      if (spotifyError.status === 403) {
-        return res.status(403).json({ 
-          error: 'Insufficient permissions. Please ensure you have granted the required scopes.' 
-        });
-      }
-
-      if (spotifyError.status === 429) {
-        return res.status(429).json({ 
-          error: 'Rate limited by Spotify API. Please try again later.' 
-        });
-      }
-
-      // Fallback to generic error
-      throw spotifyError;
-    }
-
-  } catch (error) {
-    console.error('Error filtering tracks:', error);
-    res.status(500).json({ error: 'Failed to filter tracks' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch tracks' });
   }
 });
 
-// GET /filter/test - Test endpoint to verify service is working
-router.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Filter service is working!',
-    info: 'Real Spotify API integration enabled',
-    endpoints: [
-      'POST /filter/filter - Filter tracks by pace or BPM (requires access token)',
-      'GET /filter/pace-table - Show pace to BPM conversion table'
-    ]
-  });
-});
+// POST /playlists/create
+router.post('/playlists/create', async (req, res) => {
+  const { name, trackUris, access_token } = req.body;
+  const accessToken = req.headers.authorization?.replace('Bearer ', '') || access_token;
 
-// GET /filter/pace-table - Show pace to BPM conversion examples
-router.get('/pace-table', (req, res) => {
-  const commonPaces = [
-    { pace: "6:00", minutes: 6, seconds: 0 },
-    { pace: "7:00", minutes: 7, seconds: 0 },
-    { pace: "8:00", minutes: 8, seconds: 0 },
-    { pace: "9:00", minutes: 9, seconds: 0 },
-    { pace: "10:00", minutes: 10, seconds: 0 },
-    { pace: "10:30", minutes: 10, seconds: 30 },
-    { pace: "11:00", minutes: 11, seconds: 0 },
-    { pace: "12:00", minutes: 12, seconds: 0 }
-  ];
+  if (!accessToken) return res.status(401).json({ error: 'Access token required' });
+  if (!trackUris || trackUris.length === 0) return res.status(400).json({ error: 'No tracks provided' });
 
-  const conversions = commonPaces.map(p => ({
-    pace: p.pace + " per mile",
-    estimatedBPM: paceToStepsPerMinute(p.minutes, p.seconds),
-    mph: ((1 / ((p.minutes * 60 + p.seconds) / 60)) * 60).toFixed(1)
-  }));
+  try {
+    // 1️⃣ Create playlist
+    const createRes = await fetch('https://api.spotify.com/v1/me/playlists', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, public: false, description: 'Generated by Paceify' })
+    });
+    const playlistData = await createRes.json();
+    const playlistId = playlistData.id;
 
-  res.json({
-    message: "Pace to BPM conversion table",
-    note: "BPM estimates based on average stride length. Actual cadence varies by individual.",
-    conversions
-  });
+    // 2️⃣ Add tracks to playlist
+    await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: trackUris })
+    });
+
+    res.json({ ...playlistData, trackCount: trackUris.length });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create playlist' });
+  }
 });
 
 export default router;
