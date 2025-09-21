@@ -128,7 +128,7 @@ const Dashboard = () => {
 
       console.log('Filtering with payload:', payload);
 
-      const response = await fetch('/api/filter/filter', {
+      const response = await fetch('http://localhost:3000/filter/filter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
