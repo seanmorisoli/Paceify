@@ -8,7 +8,7 @@ export default function App() {
   return (
     <Routes>
       {/* Default route → Dashboard */}
-      <Route path="/" element={<Navigate to="/Dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* Login page */}
       <Route path="/login" element={<Login />} />
