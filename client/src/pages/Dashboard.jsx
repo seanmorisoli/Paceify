@@ -3,6 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import SongList from '../components/SongList';
 import PlaylistCard from '../components/PlaylistCard';
 
+// API Configuration - automatically detects environment
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'development' 
+    ? 'http://localhost:3000' 
+    : 'https://paceify-yzcw.onrender.com');
+
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
 
@@ -72,7 +78,7 @@ const Dashboard = () => {
           ? { paceMinutes, paceSeconds, tolerance }
           : { targetCadence: cadence, tolerance };
 
-      const response = await fetch('http://localhost:3000/filter/filter', {
+      const response = await fetch(`${API_BASE_URL}/filter/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +125,7 @@ const Dashboard = () => {
 
       const payload = { name: playlistName, trackUris: tracks.map((t) => t.uri) };
 
-      const response = await fetch('http://localhost:3000/playlists/create', {
+      const response = await fetch(`${API_BASE_URL}/playlists/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

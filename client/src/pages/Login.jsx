@@ -1,9 +1,15 @@
 import React from 'react';
 
+// API Configuration - automatically detects environment
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'development' 
+    ? 'http://localhost:3000' 
+    : 'https://paceify.onrender.com');
+
 const Login = () => {
   const handleLogin = () => {
     // Direct to backend login endpoint
-    window.location.href = 'https://paceify.onrender.com/auth/login';
+    window.location.href = `${API_BASE_URL}/auth/login`;
   };
 
   return (
