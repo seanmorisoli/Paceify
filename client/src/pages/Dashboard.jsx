@@ -201,15 +201,8 @@ const Dashboard = () => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
 
-    // Only exchange code if we don't already have an access token
     if (code && !accessToken) {
-      exchangeToken(code).then(() => {
-        // Clear query params from URL after successful exchange
-        window.history.replaceState(null, null, window.location.pathname);
-      });
-    } else if (!accessToken) {
-      // If no code and no token, trigger login
-      loginWithSpotify();
+      exchangeToken(code);
     }
   }, [accessToken]);
 
