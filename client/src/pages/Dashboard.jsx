@@ -153,7 +153,15 @@ const Dashboard = () => {
   // Create playlist
   const createPlaylist = async () => {
     if (!accessToken) {
-      setError('No access token available');
+      try {
+      // Make a backend call to get a client-credentials token
+      const tokenRes = await fetch(`${API_BASE_URL}/auth/client-token`);
+      const tokenData = await tokenRes.json();
+      if (!tokenData.access_token) throw new Error('Failed to get temporary token');
+      setAccessToken(tokenData.access_token);
+    } catch (err) {
+      console.error('Error getting temporary token:', err);
+      setError('Cannot create playlist without a token');
       return;
     }
 
