@@ -6,6 +6,7 @@ const Login = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    // Parse tokens from query parameters only
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const expiresIn = searchParams.get('expires_in');
@@ -14,12 +15,12 @@ const Login = () => {
     if (accessToken) {
       console.log('Login callback received tokens:', { accessToken, refreshToken, expiresIn });
 
-      // Store tokens
+      // Store tokens securely
       localStorage.setItem('spotify_access_token', accessToken);
       if (refreshToken) localStorage.setItem('spotify_refresh_token', refreshToken);
       if (expiresIn) localStorage.setItem('spotify_expires_in', expiresIn);
 
-      // Remove tokens from URL to avoid leaks
+      // Clean URL so tokens are not visible
       try {
         if (window.history && window.history.replaceState) {
           const newUrl = window.location.origin + '/dashboard';
@@ -29,7 +30,7 @@ const Login = () => {
         console.warn('Could not clean URL', e);
       }
 
-      // Navigate to dashboard
+      // Navigate to dashboard after successful login
       navigate('/dashboard', { replace: true });
     } else if (error) {
       console.error('Spotify Auth Error:', error);
@@ -38,29 +39,34 @@ const Login = () => {
 
   // Redirect to backend login route
   const handleLogin = () => {
-    // Use your backend endpoint for OAuth login
+    // Must point to your deployed backend OAuth route
     window.location.href = 'https://paceify.onrender.com/auth/login';
   };
 
   return (
-    <div className="login-container" style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
-      color: 'white',
-    }}>
-      <h1 style={{ 
-        fontSize: '3.5rem', 
-        marginBottom: '2rem',
-        fontWeight: 'bold',
-        textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-      }}>
+    <div
+      className="login-container"
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
+        color: 'white',
+      }}
+    >
+      <h1
+        style={{
+          fontSize: '3.5rem',
+          marginBottom: '2rem',
+          fontWeight: 'bold',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+        }}
+      >
         Paceify
       </h1>
-      
+
       <button
         onClick={handleLogin}
         style={{
@@ -87,20 +93,22 @@ const Login = () => {
           e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
         }}
       >
-        <img 
-          src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png" 
+        <img
+          src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png"
           alt="Spotify"
           style={{ height: '24px', marginRight: '8px' }}
         />
         Connect with Spotify
       </button>
 
-      <p style={{ 
-        marginTop: '2rem', 
-        fontSize: '1rem',
-        opacity: '0.9',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
-      }}>
+      <p
+        style={{
+          marginTop: '2rem',
+          fontSize: '1rem',
+          opacity: 0.9,
+          textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+        }}
+      >
         Transform your playlists with music that moves you.
       </p>
     </div>
