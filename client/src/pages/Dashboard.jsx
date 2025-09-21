@@ -74,7 +74,7 @@ const Dashboard = () => {
       }
 
       // Call backend /filter with token + pace
-      const resp = await fetch(`https://paceify.onrender.com/filter/filter`, {
+      const resp = await fetch(`https://paceify.onrender.com/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ const Dashboard = () => {
         : { targetCadence: cadence, tolerance };
 
       // Send token to backend via Authorization header
-      const response = await fetch(`${API_BASE_URL}/filter/filter`, {
+      const response = await fetch(`${API_BASE_URL}/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

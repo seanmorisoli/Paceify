@@ -22,7 +22,7 @@ function paceToStepsPerMinute(paceMinutes, paceSeconds = 0, strideLengthFeet = n
 }
 
 // POST /filter
-router.post('/filter', async (req, res) => {
+router.post('/', async (req, res) => {
   console.log('POST /filter called with body:', req.body);
   const accessToken = req.headers.authorization?.replace('Bearer ', '') || req.body.access_token;
   if (!accessToken) return res.status(401).json({ error: 'Access token required' });
