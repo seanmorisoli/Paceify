@@ -6,7 +6,9 @@ const Login = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Parse tokens from query parameters only
+    // Only run this effect if the URL has Spotify tokens
+    if (!window.location.search) return;
+
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const expiresIn = searchParams.get('expires_in');
@@ -15,31 +17,28 @@ const Login = () => {
     if (accessToken) {
       console.log('Login callback received tokens:', { accessToken, refreshToken, expiresIn });
 
-      // Store tokens securely
+      // Store tokens in localStorage
       localStorage.setItem('spotify_access_token', accessToken);
       if (refreshToken) localStorage.setItem('spotify_refresh_token', refreshToken);
       if (expiresIn) localStorage.setItem('spotify_expires_in', expiresIn);
 
-      // Clean URL so tokens are not visible
+      // Clean URL so tokens aren't visible
       try {
-        if (window.history && window.history.replaceState) {
-          const newUrl = window.location.origin + '/dashboard';
-          window.history.replaceState({}, document.title, newUrl);
-        }
+        const newUrl = window.location.origin + '/dashboard';
+        window.history.replaceState({}, document.title, newUrl);
       } catch (e) {
         console.warn('Could not clean URL', e);
       }
 
-      // Navigate to dashboard after successful login
+      // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     } else if (error) {
       console.error('Spotify Auth Error:', error);
     }
   }, [searchParams, navigate]);
 
-  // Redirect to backend login route
   const handleLogin = () => {
-    // Must point to your deployed backend OAuth route
+    // Must point to deployed backend endpoint that handles Spotify OAuth
     window.location.href = 'https://paceify.onrender.com/auth/login';
   };
 
