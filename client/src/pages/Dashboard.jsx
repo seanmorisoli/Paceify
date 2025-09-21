@@ -380,18 +380,35 @@ const Dashboard = () => {
         <button
           onClick={createPlaylist}
           style={{
-            marginTop: '1rem',
-            padding: '10px 20px',
+            padding: '1rem',
             borderRadius: '25px',
             background: '#4A90E2',
             color: 'white',
             fontWeight: 'bold',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '250px',
+            overflowY: 'auto',
+            width: '100%',
+            gap: '0.3rem',
           }}
         >
-          Create Playlist
+          <span style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+            Create Playlist ({tracks.length} tracks)
+          </span>
+
+          {tracks.map((track, index) => (
+            <span key={track.id || index} style={{ fontSize: '0.9rem', color: '#fff' }}>
+              {index + 1}. {track.name} – {track.artists?.map(a => a.name).join(', ')}
+            </span>
+          ))}
         </button>
+
+        {/* Keep SongList display below if desired */}
         <SongList tracks={tracks} />
+
+        {/* Show created playlist card if it exists */}
         {createdPlaylist && <PlaylistCard playlist={createdPlaylist} />}
 
       </div>
