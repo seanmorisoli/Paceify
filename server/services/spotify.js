@@ -7,24 +7,20 @@ function authHeader(token) {
 }
 
 async function handleRequest(url, options = {}) {
-  try {
-    const res = await fetch(url, options);
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-      const message = data?.error?.message || res.statusText;
-      const e = new Error(`Spotify API error (${res.status}): ${message}`);
-      e.status = res.status;
-      e.body = data;
-      throw e;
-    }
-    return await res.json();
-  } catch (err) {
-    throw err;
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const message = data?.error?.message || res.statusText;
+    const e = new Error(`Spotify API error (${res.status}): ${message}`);
+    e.status = res.status;
+    e.body = data;
+    throw e;
   }
+  return res.json();
 }
 
 /**
- * Fetch all playlists for the current user (handles pagination)
+ * Fetch all playlists for the current user
  */
 export async function getPlaylists(accessToken) {
   const items = [];
@@ -40,7 +36,7 @@ export async function getPlaylists(accessToken) {
 }
 
 /**
- * Fetch all tracks for a playlist (handles pagination)
+ * Fetch all tracks for a playlist
  */
 export async function getPlaylistTracks(playlistId, accessToken) {
   const items = [];
@@ -90,7 +86,7 @@ export async function createPlaylist(userId, name, options = {}, accessToken) {
   };
 
   const url = `${SPOTIFY_API}/users/${encodeURIComponent(userId)}/playlists`;
-  return await handleRequest(url, {
+  return handleRequest(url, {
     method: 'POST',
     headers: { ...authHeader(accessToken), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -121,54 +117,32 @@ export async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
 }
 
 /**
- * Get user's saved tracks (liked songs) with audio features
- * @param {string} accessToken
- * @param {number} limit - max tracks to fetch (default 50, max 50 per request)
- * @returns {Promise<Array>} Array of track objects with audio features
+ * Get all user saved tracks (liked songs) with audio features
  */
-export async function getUserSavedTracks(accessToken, limit = 50) {
-    let allTracks = [];
-    let url = `https://api.spotify.com/v1/me/tracks?limit=${limit}`;
-    
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    
-    if (!res.ok) {
-      console.error('Spotify API error', await res.text());
-      return [];
-    }
-    
-    const data = await res.json();
-    allTracks = data.items.map(item => item.track);
+export async function getUserSavedTracks(accessToken, limitPerPage = 50) {
+  let allTracks = [];
+  let url = `${SPOTIFY_API}/me/tracks?limit=${limitPerPage}`;
 
-    // Fetch audio features
-    const ids = allTracks.map(t => t.id).join(',');
-    const afRes = await fetch(`https://api.spotify.com/v1/audio-features?ids=${ids}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const afData = await afRes.json();
+  while (url) {
+    const data = await handleRequest(url, { headers: authHeader(accessToken) });
+    const tracks = (data.items || []).map(item => item.track);
+    allTracks.push(...tracks);
+    url = data.next;
+  }
 
-    // Attach audio features to tracks
-    allTracks.forEach((t, i) => {
-      t.audio_features = afData.audio_features[i];
-    });
+  // Fetch audio features in batches of 100
+  const trackIds = allTracks.map(t => t.id);
+  const audioFeatures = await getAudioFeatures(trackIds, accessToken);
 
-    return allTracks;
+  const featuresMap = {};
+  audioFeatures.forEach(f => { if (f?.id) featuresMap[f.id] = f; });
+
+  // Attach audio features
+  return allTracks.map(t => ({ ...t, audio_features: featuresMap[t.id] || null })).filter(t => t.audio_features);
 }
 
 /**
- * Get track recommendations based on seed tracks and audio features
- * @param {Object} params - recommendation parameters
- * @param {Array<string>} params.seed_tracks - array of track IDs (max 5)
- * @param {number} params.target_tempo - target BPM
- * @param {number} params.min_tempo - minimum BPM
- * @param {number} params.max_tempo - maximum BPM
- * @param {number} params.limit - number of recommendations (default 20, max 100)
- * @param {string} accessToken
- * @returns {Promise<Array>} Array of recommended track objects with audio features
+ * Get recommendations based on seed tracks and audio features
  */
 export async function getRecommendations(params, accessToken) {
   const {
@@ -180,58 +154,25 @@ export async function getRecommendations(params, accessToken) {
     ...otherParams
   } = params;
 
-  // Build query parameters
-  const queryParams = {
-    limit: Math.min(limit, 100),
-    ...otherParams
-  };
+  const queryParams = { limit: Math.min(limit, 100), ...otherParams };
 
-  // Add seed tracks (max 5)
-  if (seed_tracks.length > 0) {
-    queryParams.seed_tracks = seed_tracks.slice(0, 5).join(',');
-  }
-
-  // Add tempo constraints
+  if (seed_tracks.length > 0) queryParams.seed_tracks = seed_tracks.slice(0, 5).join(',');
   if (target_tempo) queryParams.target_tempo = target_tempo;
   if (min_tempo) queryParams.min_tempo = min_tempo;
   if (max_tempo) queryParams.max_tempo = max_tempo;
 
-  // If no seed tracks provided, use seed genres as fallback
-  if (!queryParams.seed_tracks) {
-    queryParams.seed_genres = 'pop,rock,electronic'; // default genres for running
-  }
+  if (!queryParams.seed_tracks) queryParams.seed_genres = 'pop,rock,electronic';
 
   const url = `${SPOTIFY_API}/recommendations?${new URLSearchParams(queryParams).toString()}`;
   const data = await handleRequest(url, { headers: authHeader(accessToken) });
 
   const tracks = data.tracks || [];
-  
-  // Get audio features for recommended tracks
-  const trackIds = tracks.map(track => track.id);
+  const trackIds = tracks.map(t => t.id);
   const audioFeatures = await getAudioFeatures(trackIds, accessToken);
-  
-  // Create a map of track ID to audio features
+
   const featuresMap = {};
-  audioFeatures.forEach(feature => {
-    if (feature && feature.id) {
-      featuresMap[feature.id] = feature;
-    }
-  });
+  audioFeatures.forEach(f => { if (f?.id) featuresMap[f.id] = f; });
 
-  // Combine tracks with their audio features
-  return tracks.map(track => ({
-    ...track,
-    audio_features: featuresMap[track.id] || null,
-    isRecommended: true
-  })).filter(track => track.audio_features);
+  return tracks.map(track => ({ ...track, audio_features: featuresMap[track.id] || null, isRecommended: true }))
+               .filter(track => track.audio_features);
 }
-
-export default {
-  getPlaylists,
-  getPlaylistTracks,
-  getAudioFeatures,
-  createPlaylist,
-  addTracksToPlaylist,
-  getUserSavedTracks,
-  getRecommendations,
-};
