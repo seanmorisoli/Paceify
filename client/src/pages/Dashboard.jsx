@@ -65,14 +65,6 @@ const Dashboard = () => {
           Dashboard
         </h1>
 
-<<<<<<< Updated upstream
-=======
-    
-        {/* Show controls only when authenticated */}
-        {accessToken && (
-          <>
-            {/* Filter Controls Section - BPM and Tolerance inputs */}
->>>>>>> Stashed changes
         <div style={{
           background: '#b8b3b3ff',
           padding: '1.5rem',
