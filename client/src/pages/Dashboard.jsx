@@ -15,8 +15,7 @@ import PlaylistCard from '../components/PlaylistCard';
  * - Automatic BPM/pace conversion
  */
 const Dashboard = () => {
-  // Commented out authentication code
-  /*
+  // Authentication state management
   const [searchParams] = useSearchParams();
   const [accessToken, setAccessToken] = useState(() => {
     const tokenFromUrl = searchParams.get('access_token');
@@ -26,8 +25,6 @@ const Dashboard = () => {
     }
     return localStorage.getItem('spotify_access_token');
   });
-  */
-  const [accessToken, setAccessToken] = useState(null); // Temporary placeholder
 
   // Core state for track management
   const [tracks, setTracks] = useState([]); // Stores filtered track results
@@ -87,16 +84,14 @@ const Dashboard = () => {
   const filterTracks = async () => {
     console.log('filterTracks called with:', { filterMode, paceMinutes, paceSeconds, cadence, tolerance });
     
-    // Commented out authentication check
-    /*
+    // Check authentication before proceeding
     if (!accessToken) {
       setError('Please authenticate with Spotify first. Redirecting...');
       setTimeout(() => {
-        window.location.href = '/auth/login';
+        window.location.href = 'http://localhost:3000/auth/login';
       }, 2000);
       return;
     }
-    */
 
     // Normalize numeric inputs to avoid sending empty strings or out-of-range values
     const normalizedTolerance = (typeof tolerance === 'number' && !Number.isNaN(tolerance))
@@ -133,9 +128,8 @@ const Dashboard = () => {
       const response = await fetch('http://localhost:3000/filter/filter', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-          // Commented out auth header
-          // 'Authorization': `Bearer ${accessToken}`
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(payload)
       });
@@ -146,7 +140,7 @@ const Dashboard = () => {
           setError('Your Spotify session has expired. Please re-authenticate.');
           localStorage.removeItem('spotify_access_token');
           setTimeout(() => {
-            window.location.href = '/auth/login';
+            window.location.href = 'http://localhost:3000/auth/login';
           }, 2000);
           return;
         }
@@ -188,13 +182,11 @@ const Dashboard = () => {
       return;
     }
 
-    // Commented out auth check
-    /*
+    // Check authentication before creating playlist
     if (!accessToken) {
       setError('Please authenticate with Spotify first.');
       return;
     }
-    */
 
     setCreatingPlaylist(true);
     setError(null);
@@ -216,12 +208,11 @@ const Dashboard = () => {
 
       console.log('Creating playlist with payload:', payload);
 
-      const response = await fetch('/api/playlists/create', {
+      const response = await fetch('http://localhost:3000/playlists/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-          // Commented out auth header
-          // 'Authorization': `Bearer ${accessToken}`
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(payload)
       });
@@ -232,7 +223,7 @@ const Dashboard = () => {
           setError('Your Spotify session has expired. Please re-authenticate.');
           localStorage.removeItem('spotify_access_token');
           setTimeout(() => {
-            window.location.href = '/auth/login';
+            window.location.href = 'http://localhost:3000/auth/login';
           }, 2000);
           return;
         }
