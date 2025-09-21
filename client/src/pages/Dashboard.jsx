@@ -10,45 +10,69 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     : 'https://paceify.onrender.com');
 
 const Dashboard = () => {
+  const loginWithSpotify = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`);
+      if (!res.ok) throw new Error('Failed to get PKCE code verifier');
+
+      const data = await res.json();
+      localStorage.setItem('spotify_code_verifier', data.codeVerifier);
+      // Redirect user to Spotify authorization page
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Spotify login failed.');
+    }
+  };
+
+  const exchangeToken = async (code) => {
+    const codeVerifier = localStorage.getItem('spotify_code_verifier');
+    if (!codeVerifier) {
+      setError('Missing code verifier. Please login again.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, codeVerifier }),
+      });
+
+      if (!res.ok) throw new Error('Token exchange failed');
+
+      const data = await res.json();
+      localStorage.setItem('spotify_access_token', data.access_token);
+      setAccessToken(data.access_token);
+
+      // Remove query params from URL
+      window.history.replaceState(null, null, window.location.pathname);
+    } catch (err) {
+      console.error('Token exchange error:', err);
+      setError('Failed to get Spotify access token.');
+    }
+  };
+
+  
+
+
   const [searchParams] = useSearchParams();
 
   // Authentication state
+  // Authentication state - read from query params instead of hash
   const [accessToken, setAccessToken] = useState(() => {
-    const hash = window.location.hash; // "#access_token=XYZ&token_type=Bearer&expires_in=3600"
-    const params = new URLSearchParams(hash.replace('#', ''));
+    const params = new URLSearchParams(window.location.search);
     const tokenFromUrl = params.get('access_token');
-    console.log('Initializing - tokenFromUrl:', !!tokenFromUrl);
-    
     if (tokenFromUrl) {
-      console.log('Found token in URL, storing in localStorage');
       localStorage.setItem('spotify_access_token', tokenFromUrl);
+      // Remove query params from URL
+      window.history.replaceState(null, null, window.location.pathname);
       return tokenFromUrl;
     }
-    
-    const storedToken = localStorage.getItem('spotify_access_token');
-    console.log('Using stored token:', !!storedToken);
-    return storedToken;
+    return localStorage.getItem('spotify_access_token');
   });
 
-  // Handle token extraction from URL on mount
-  useEffect(() => {
-    // Get token from URL fragment
-    const hash = window.location.hash; // e.g., #access_token=ABC123&token_type=Bearer&expires_in=3600
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1)); // remove leading '#'
-      const token = params.get('access_token');
-      if (token) {
-        setAccessToken(token);
-        localStorage.setItem('spotify_access_token', token);
-        // Remove the fragment from URL for cleanliness
-        window.history.replaceState(null, null, window.location.pathname);
-      }
-    } else {
-      // If no token in URL, try localStorage
-      const storedToken = localStorage.getItem('spotify_access_token');
-      if (storedToken) setAccessToken(storedToken);
-    }
-  }, []);
+
 
   // Core state
   const [tracks, setTracks] = useState([]);
@@ -173,13 +197,15 @@ const Dashboard = () => {
 
   // Auto-filter tracks on criteria change OR when access token is available
   useEffect(() => {
-    console.log('useEffect triggered - accessToken:', !!accessToken, 'filterMode:', filterMode);
-    if (accessToken) {
-      const timeoutId = setTimeout(() => filterTracks(), 500);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [filterMode, paceMinutes, paceSeconds, cadence, tolerance, accessToken]);
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
 
+    if (code && !accessToken) {
+      exchangeToken(code);
+    }
+  }, [accessToken]);
+
+  
   return (
     <div
       style={{

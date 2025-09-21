@@ -12,33 +12,63 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Parse tokens from query string
+    // Check for PKCE code in query params
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const expiresIn = params.get('expires_in');
+    const code = params.get('code');
 
-    if (accessToken) {
-      // Store tokens (could use context or secure storage later)
-      localStorage.setItem('spotify_access_token', accessToken);
-      if (refreshToken) {
-        localStorage.setItem('spotify_refresh_token', refreshToken);
-      }
-      if (expiresIn) {
-        localStorage.setItem('spotify_expires_in', expiresIn);
-        // Save absolute expiry timestamp
-        const expiryTime = Date.now() + Number(expiresIn) * 1000;
-        localStorage.setItem('spotify_expiry_time', expiryTime);
+    if (code) {
+      const codeVerifier = localStorage.getItem('spotify_code_verifier');
+      if (!codeVerifier) {
+        console.error('No code verifier found. Please login again.');
+        return;
       }
 
-      // Clean up query params and go to dashboard
-      navigate('/dashboard', { replace: true });
+      // Exchange authorization code for access token
+      const exchangeToken = async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/auth/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, codeVerifier }),
+          });
+
+          if (!res.ok) throw new Error('Token exchange failed');
+
+          const data = await res.json();
+
+          localStorage.setItem('spotify_access_token', data.access_token);
+          if (data.refresh_token) {
+            localStorage.setItem('spotify_refresh_token', data.refresh_token);
+          }
+
+          // Clean up URL query params
+          window.history.replaceState(null, null, window.location.pathname);
+
+          // Redirect to dashboard
+          navigate('/dashboard', { replace: true });
+        } catch (err) {
+          console.error('Error exchanging code for token:', err);
+        }
+      };
+
+      exchangeToken();
     }
   }, [navigate]);
 
-  const handleLogin = () => {
-    // Redirect user to backend login endpoint
-    window.location.href = `${API_BASE_URL}/auth/login`;
+  const handleLogin = async () => {
+    // Request backend to generate Spotify auth URL with PKCE
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`);
+      if (!res.ok) throw new Error('Failed to get login URL');
+
+      const data = await res.json();
+      // Save code verifier for PKCE
+      if (data.codeVerifier) localStorage.setItem('spotify_code_verifier', data.codeVerifier);
+      // Redirect to Spotify auth
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Login failed:', err);
+    }
   };
 
   return (
