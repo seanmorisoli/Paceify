@@ -15,7 +15,7 @@ const Dashboard = () => {
       const res = await fetch(`${API_BASE_URL}/auth/login`);
       if (!res.ok) throw new Error('Failed to start PKCE login');
 
-      const data = await res.json(); // expects { url: string, codeVerifier: string }
+      const data = await res.json(); // { url, codeVerifier }
       localStorage.setItem('spotify_code_verifier', data.codeVerifier);
 
       // Redirect user to Spotify authorization page
