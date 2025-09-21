@@ -118,10 +118,123 @@ export async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
   return responses;
 }
 
+/**
+ * Get user's saved tracks (liked songs) with audio features
+ * @param {string} accessToken
+ * @param {number} limit - max tracks to fetch (default 50, max 50 per request)
+ * @returns {Promise<Array>} Array of track objects with audio features
+ */
+export async function getUserSavedTracks(accessToken, limit = 50) {
+  const items = [];
+  let url = `${SPOTIFY_API}/me/tracks?limit=${Math.min(limit, 50)}`;
+  let fetched = 0;
+
+  while (url && fetched < limit) {
+    const data = await handleRequest(
+      axios.get(url, { headers: authHeader(accessToken) })
+    );
+    
+    const tracks = (data.items || []).map(item => item.track).filter(track => track && track.id);
+    items.push(...tracks);
+    fetched += tracks.length;
+    
+    url = data.next && fetched < limit ? data.next : null;
+  }
+
+  // Get audio features for all tracks
+  const trackIds = items.map(track => track.id);
+  const audioFeatures = await getAudioFeatures(trackIds, accessToken);
+  
+  // Create a map of track ID to audio features
+  const featuresMap = {};
+  audioFeatures.forEach(feature => {
+    if (feature && feature.id) {
+      featuresMap[feature.id] = feature;
+    }
+  });
+
+  // Combine tracks with their audio features
+  return items.map(track => ({
+    ...track,
+    audio_features: featuresMap[track.id] || null
+  })).filter(track => track.audio_features); // Only return tracks with audio features
+}
+
+/**
+ * Get track recommendations based on seed tracks and audio features
+ * @param {Object} params - recommendation parameters
+ * @param {Array<string>} params.seed_tracks - array of track IDs (max 5)
+ * @param {number} params.target_tempo - target BPM
+ * @param {number} params.min_tempo - minimum BPM
+ * @param {number} params.max_tempo - maximum BPM
+ * @param {number} params.limit - number of recommendations (default 20, max 100)
+ * @param {string} accessToken
+ * @returns {Promise<Array>} Array of recommended track objects with audio features
+ */
+export async function getRecommendations(params, accessToken) {
+  const {
+    seed_tracks = [],
+    target_tempo,
+    min_tempo,
+    max_tempo,
+    limit = 20,
+    ...otherParams
+  } = params;
+
+  // Build query parameters
+  const queryParams = {
+    limit: Math.min(limit, 100),
+    ...otherParams
+  };
+
+  // Add seed tracks (max 5)
+  if (seed_tracks.length > 0) {
+    queryParams.seed_tracks = seed_tracks.slice(0, 5).join(',');
+  }
+
+  // Add tempo constraints
+  if (target_tempo) queryParams.target_tempo = target_tempo;
+  if (min_tempo) queryParams.min_tempo = min_tempo;
+  if (max_tempo) queryParams.max_tempo = max_tempo;
+
+  // If no seed tracks provided, use seed genres as fallback
+  if (!queryParams.seed_tracks) {
+    queryParams.seed_genres = 'pop,rock,electronic'; // default genres for running
+  }
+
+  const url = `${SPOTIFY_API}/recommendations?${new URLSearchParams(queryParams).toString()}`;
+  const data = await handleRequest(
+    axios.get(url, { headers: authHeader(accessToken) })
+  );
+
+  const tracks = data.tracks || [];
+  
+  // Get audio features for recommended tracks
+  const trackIds = tracks.map(track => track.id);
+  const audioFeatures = await getAudioFeatures(trackIds, accessToken);
+  
+  // Create a map of track ID to audio features
+  const featuresMap = {};
+  audioFeatures.forEach(feature => {
+    if (feature && feature.id) {
+      featuresMap[feature.id] = feature;
+    }
+  });
+
+  // Combine tracks with their audio features
+  return tracks.map(track => ({
+    ...track,
+    audio_features: featuresMap[track.id] || null,
+    isRecommended: true
+  })).filter(track => track.audio_features);
+}
+
 export default {
   getPlaylists,
   getPlaylistTracks,
   getAudioFeatures,
   createPlaylist,
   addTracksToPlaylist,
+  getUserSavedTracks,
+  getRecommendations,
 };

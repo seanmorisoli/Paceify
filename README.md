@@ -2,7 +2,6 @@
 
 ## Description
 Paceify is a website that creates personalized playlists to exercise to based on a user’s pace and stride. By connecting your Spotify account, Paceify analyzes your preferred pace and recommends songs that match your tempo, helping you stay motivated and in rhythm while running!
-
 ---
 
 ## Features
@@ -18,3 +17,8 @@ Paceify is a website that creates personalized playlists to exercise to based on
 - **Frontend:** React
 - **Authentication:** OAuth 2.0 with Spotify
 - **Styling:** Tailwind CSS
+
+---
+
+## Authors
+Sean Morisoli, David Lindsey, Ansel Gunther, Kang Shin Young
