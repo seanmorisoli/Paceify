@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import SongList from '../components/SongList';
 import PlaylistCard from '../components/PlaylistCard';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Authentication state
@@ -50,8 +49,7 @@ const Dashboard = () => {
   // Filter tracks
   const filterTracks = async () => {
     if (!accessToken) {
-      setError('Please authenticate with Spotify first. Redirecting...');
-      setTimeout(() => navigate('/login', { replace: true }), 2000);
+      setError('No Spotify access token found.');
       return;
     }
 
@@ -59,26 +57,21 @@ const Dashboard = () => {
     setError(null);
 
     try {
-      const payload = filterMode === 'pace'
-        ? { paceMinutes, paceSeconds, tolerance }
-        : { targetCadence: cadence, tolerance };
+      const payload =
+        filterMode === 'pace'
+          ? { paceMinutes, paceSeconds, tolerance }
+          : { targetCadence: cadence, tolerance };
 
       const response = await fetch('http://localhost:3000/filter/filter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          setError('Spotify session expired. Redirecting...');
-          localStorage.removeItem('spotify_access_token');
-          setTimeout(() => navigate('/login', { replace: true }), 2000);
-          return;
-        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -86,7 +79,6 @@ const Dashboard = () => {
       setApiResponse(data);
       setTracks(data.tracks || []);
       if (filterMode === 'pace' && data.targetCadence) setCadence(data.targetCadence);
-
     } catch (err) {
       setError(`Failed to filter tracks: ${err.message}`);
       setTracks([]);
@@ -102,11 +94,6 @@ const Dashboard = () => {
       return;
     }
 
-    if (!accessToken) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
     setCreatingPlaylist(true);
     setError(null);
 
@@ -115,22 +102,21 @@ const Dashboard = () => {
         ? `Running Mix - ${apiResponse.originalPace} pace (${cadence} BPM)`
         : `Running Mix - ${cadence} BPM`;
 
-      const payload = { name: playlistName, trackUris: tracks.map(t => t.uri) };
+      const payload = { name: playlistName, trackUris: tracks.map((t) => t.uri) };
 
       const response = await fetch('http://localhost:3000/playlists/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const playlistData = await response.json();
       setCreatedPlaylist(playlistData);
-
     } catch (err) {
       setError(`Failed to create playlist: ${err.message}`);
     } finally {
@@ -150,7 +136,7 @@ const Dashboard = () => {
         minHeight: '100vh',
         background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
         padding: '2rem',
-        color: '#FFFFFF'
+        color: '#FFFFFF',
       }}
     >
       {/* Content container */}
@@ -161,7 +147,7 @@ const Dashboard = () => {
           padding: '2rem',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center'
+          alignItems: 'center',
         }}
       >
         <h1
@@ -171,7 +157,7 @@ const Dashboard = () => {
             textAlign: 'center',
             color: '#FFFFFF',
             textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
           }}
         >
           Dashboard
@@ -186,7 +172,7 @@ const Dashboard = () => {
             marginBottom: '2rem',
             border: '2px solid white',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            width: 'fit-content'
+            width: 'fit-content',
           }}
         >
           <div
@@ -195,23 +181,17 @@ const Dashboard = () => {
               justifyContent: 'center',
               gap: '2rem',
               flexWrap: 'wrap',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             {/* Filter Mode Toggle */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem'
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                 Filter by:
               </span>
               <select
                 value={filterMode}
-                onChange={e => setFilterMode(e.target.value)}
+                onChange={(e) => setFilterMode(e.target.value)}
                 style={{
                   padding: '8px 15px',
                   borderRadius: '20px',
@@ -219,7 +199,7 @@ const Dashboard = () => {
                   background: '#4A4A4A',
                   fontSize: '1.1rem',
                   color: 'white',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
                 }}
               >
                 <option value="pace">Running Pace</option>
@@ -228,34 +208,21 @@ const Dashboard = () => {
             </div>
 
             {filterMode === 'pace' ? (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}
-              >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <label
                   style={{
                     fontSize: '1.1rem',
                     alignItems: 'center',
                     fontWeight: 'bold',
-                    color: '#4A4A4A'
+                    color: '#4A4A4A',
                   }}
                 >
                   Pace per mile:
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginTop: '0.5rem'
-                    }}
-                  >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <input
                       type="number"
                       value={paceMinutes}
-                      onChange={e => {
+                      onChange={(e) => {
                         const val = e.target.value;
                         if (val === '') setPaceMinutes('');
                         else {
@@ -274,14 +241,14 @@ const Dashboard = () => {
                         fontSize: '1.1rem',
                         color: 'white',
                         fontWeight: 'bold',
-                        textAlign: 'center'
+                        textAlign: 'center',
                       }}
                     />
                     <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>:</span>
                     <input
                       type="number"
                       value={paceSeconds}
-                      onChange={e => {
+                      onChange={(e) => {
                         const val = e.target.value;
                         if (val === '') setPaceSeconds('');
                         else {
@@ -300,18 +267,12 @@ const Dashboard = () => {
                         fontSize: '1.1rem',
                         color: 'white',
                         fontWeight: 'bold',
-                        textAlign: 'center'
+                        textAlign: 'center',
                       }}
                     />
                   </div>
                 </label>
-                <div
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#333',
-                    textAlign: 'center'
-                  }}
-                >
+                <div style={{ fontSize: '0.9rem', color: '#333', textAlign: 'center' }}>
                   <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
                   <div style={{ fontSize: '0.8rem', alignItems: 'center' }}>
                     ({paceMinutes}:{(paceSeconds || 0).toString().padStart(2, '0')}/mile)
@@ -319,25 +280,13 @@ const Dashboard = () => {
                 </div>
               </div>
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}
-              >
-                <label
-                  style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    color: '#4A4A4A'
-                  }}
-                >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                   Target Cadence (BPM):
                   <input
                     type="number"
                     value={cadence}
-                    onChange={e => {
+                    onChange={(e) => {
                       const val = e.target.value;
                       if (val === '') setCadence('');
                       else {
@@ -357,17 +306,11 @@ const Dashboard = () => {
                       fontSize: '1.1rem',
                       color: 'white',
                       fontWeight: 'bold',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     }}
                   />
                 </label>
-                <div
-                  style={{
-                    fontSize: '0.9rem',
-                    color: '#333',
-                    textAlign: 'center'
-                  }}
-                >
+                <div style={{ fontSize: '0.9rem', color: '#333', textAlign: 'center' }}>
                   <div>
                     ≈ {Math.floor(180 / cadence)}:
                     {String(Math.round((180 / cadence - Math.floor(180 / cadence)) * 60)).padStart(2, '0')}
@@ -378,19 +321,13 @@ const Dashboard = () => {
               </div>
             )}
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem'
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <label style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#4A4A4A' }}>
                 Tolerance: ±
                 <input
                   type="number"
                   value={tolerance}
-                  onChange={e => {
+                  onChange={(e) => {
                     const val = e.target.value;
                     if (val === '') setTolerance('');
                     else {
@@ -410,7 +347,7 @@ const Dashboard = () => {
                     fontSize: '1.1rem',
                     color: 'white',
                     fontWeight: 'bold',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   }}
                 />
                 <span style={{ marginLeft: '0.5rem' }}>BPM</span>
