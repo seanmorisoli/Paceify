@@ -42,7 +42,8 @@ router.post('/filter', async (req, res) => {
     const userTracks = await getUserSavedTracks(accessToken, 200);
     console.log('Fetched user tracks:', userTracks.length);
 
-    const filteredTracks = userTracks.filter(t => t.audio_features?.tempo >= minBPM && t.audio_features?.tempo <= maxBPM);
+    const filteredTracks = userTracks;
+    // const filteredTracks = userTracks.filter(t => t.audio_features?.tempo >= minBPM && t.audio_features?.tempo <= maxBPM);
     console.log('Tracks after BPM filter:', filteredTracks.length);
 
     let finalTracks = filteredTracks;
