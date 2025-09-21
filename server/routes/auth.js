@@ -6,12 +6,12 @@ import querystring from 'querystring';
 
 const router = express.Router();
 
-// Generate random string (for code verifier)
-function generateRandomString(length = 64) {
+// Utility to generate a random string
+function generateRandomString(length) {
   return crypto.randomBytes(length).toString('hex');
 }
 
-// Base64 URL-encode
+// Utility to base64-url encode a string (for PKCE)
 function base64URLEncode(buffer) {
   return buffer.toString('base64')
     .replace(/\+/g, '-')
@@ -19,73 +19,83 @@ function base64URLEncode(buffer) {
     .replace(/=+$/, '');
 }
 
-// Generate code challenge (SHA256 → base64url)
+// Utility to generate code challenge for PKCE
 function generateCodeChallenge(codeVerifier) {
-  return base64URLEncode(crypto.createHash('sha256').update(codeVerifier).digest());
+  return base64URLEncode(
+    crypto.createHash('sha256').update(codeVerifier).digest()
+  );
 }
 
-// GET /auth/login → return Spotify auth URL + codeVerifier
+// GET /auth/login → redirect user to Spotify login
 router.get('/login', (req, res) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const redirectUri = 'https://paceify.onrender.com/dashboard';
+  const redirectUri = 'https://paceify-yzcw.onrender.com/auth/callback';
   const scope = 'playlist-modify-private playlist-modify-public user-read-private user-read-email';
 
+  // PKCE code verifier & challenge
   const codeVerifier = generateRandomString(64);
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
-  // Save codeVerifier in session or cookie
+  // Save codeVerifier in session (or some store)
   req.session = req.session || {};
   req.session.codeVerifier = codeVerifier;
 
-  const spotifyUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
-    client_id: clientId,
-    response_type: 'code',
-    redirect_uri: redirectUri,
-    scope,
-    code_challenge_method: 'S256',
-    code_challenge: codeChallenge,
-    show_dialog: true
-  });
+  const spotifyUrl = 'https://accounts.spotify.com/authorize?' +
+    querystring.stringify({
+      client_id: clientId,
+      response_type: 'code', // Authorization Code Flow
+      redirect_uri: redirectUri,
+      scope,
+      code_challenge_method: 'S256',
+      code_challenge: codeChallenge,
+      show_dialog: true
+    });
 
-  // Redirect browser to Spotify
   res.redirect(spotifyUrl);
 });
 
+// GET /auth/callback → exchange code for access token
+router.get('/callback', async (req, res) => {
+  const code = req.query.code || null;
+  if (!code) return res.status(400).send('No code returned from Spotify');
 
-// POST /auth/token → exchange code + codeVerifier for access token
-router.post('/token', async (req, res) => {
-  const { code, codeVerifier } = req.body;
-  if (!code || !codeVerifier) return res.status(400).json({ error: 'Missing code or codeVerifier' });
-
-  const redirectUri = 'https://paceify-yzcw.onrender.com/dashboard'; // must match login redirect
-
-  const params = new URLSearchParams();
-  params.append('grant_type', 'authorization_code');
-  params.append('code', code);
-  params.append('redirect_uri', redirectUri);
-  params.append('client_id', process.env.SPOTIFY_CLIENT_ID);
-  params.append('code_verifier', codeVerifier);
+  const codeVerifier = req.session?.codeVerifier;
+  if (!codeVerifier) return res.status(400).send('Missing code verifier');
 
   try {
-    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+    const params = new URLSearchParams();
+    params.append('grant_type', 'authorization_code');
+    params.append('code', code);
+    params.append('redirect_uri', 'https://paceify-yzcw.onrender.com/auth/callback');
+    params.append('client_id', process.env.SPOTIFY_CLIENT_ID);
+    params.append('code_verifier', codeVerifier);
+
+    const response = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString()
     });
 
-    const data = await tokenRes.json();
+    const data = await response.json();
+    if (data.error) return res.status(400).json(data);
 
-    if (!tokenRes.ok) return res.status(tokenRes.status).json(data);
+    const accessToken = data.access_token;
+    const refreshToken = data.refresh_token;
+    const expiresIn = data.expires_in;
 
-    res.json({
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_in: data.expires_in
-    });
+    // Redirect to frontend with tokens in query params
+    const redirectUrl = 'https://paceify-yzcw.onrender.com/dashboard?' + 
+      querystring.stringify({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_in: expiresIn
+      });
+
+    res.redirect(redirectUrl);
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Token exchange failed' });
+    res.status(500).send('Error exchanging code for token');
   }
 });
 
