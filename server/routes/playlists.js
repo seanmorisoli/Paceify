@@ -13,7 +13,7 @@ router.post('/create', async (req, res) => {
   console.log(`Creating playlist "${name}" with ${trackUris.length} tracks`);
 
   try {
-    const playlistData = await createSpotifyPlaylist(accessToken, name, trackUris);
+    const playlistData = await createPlaylist(accessToken, name, trackUris);
     console.log('Playlist successfully created:', playlistData);
     res.json(playlistData);
   } catch (err) {
