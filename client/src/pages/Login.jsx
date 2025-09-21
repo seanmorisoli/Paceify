@@ -5,7 +5,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Handle the callback from Spotify
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
@@ -13,7 +12,6 @@ const Login = () => {
     const error = searchParams.get('error');
 
     if (accessToken) {
-      // Debug
       console.log('Login callback received tokens:', { accessToken, refreshToken, expiresIn });
 
       // Store tokens
@@ -21,7 +19,7 @@ const Login = () => {
       if (refreshToken) localStorage.setItem('spotify_refresh_token', refreshToken);
       if (expiresIn) localStorage.setItem('spotify_expires_in', expiresIn);
 
-      // Remove tokens from URL to avoid leaks (use replaceState so history isn't polluted)
+      // Remove tokens from URL to avoid leaks
       try {
         if (window.history && window.history.replaceState) {
           const newUrl = window.location.origin + '/dashboard';
@@ -31,17 +29,16 @@ const Login = () => {
         console.warn('Could not clean URL', e);
       }
 
-      // Ensure we navigate to dashboard. Use full-page replace to avoid router timing issues.
-      window.location.replace('/dashboard');
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
     } else if (error) {
-      console.error('Auth error:', error);
+      console.error('Spotify Auth Error:', error);
     }
   }, [searchParams, navigate]);
 
-  // Handle login button click
+  // Redirect to backend login route
   const handleLogin = () => {
-    // Redirect to our backend auth endpoint (relative so it works in dev and prod)
-    // In dev Vite will proxy /auth to the backend; in single-port mode the server serves /auth directly.
+    // Use your backend endpoint for OAuth login
     window.location.href = '/auth/login';
   };
 
@@ -52,7 +49,7 @@ const Login = () => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)', // Light blue to steel blue gradient
+      background: 'linear-gradient(45deg, #87CEEB 30%, #4682B4 90%)',
       color: 'white',
     }}>
       <h1 style={{ 
@@ -67,7 +64,7 @@ const Login = () => {
       <button
         onClick={handleLogin}
         style={{
-          backgroundColor: '#4A4A4A', // Dark gray
+          backgroundColor: '#4A4A4A',
           color: 'white',
           border: '2px solid white',
           borderRadius: '25px',
