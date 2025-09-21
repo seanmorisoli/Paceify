@@ -28,6 +28,29 @@ const Dashboard = () => {
     return storedToken;
   });
 
+  // Handle token extraction from URL on mount
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get('access_token');
+    const refreshTokenFromUrl = searchParams.get('refresh_token');
+    const expiresInFromUrl = searchParams.get('expires_in');
+    
+    if (tokenFromUrl && !accessToken) {
+      console.log('Extracting tokens from URL');
+      localStorage.setItem('spotify_access_token', tokenFromUrl);
+      if (refreshTokenFromUrl) {
+        localStorage.setItem('spotify_refresh_token', refreshTokenFromUrl);
+      }
+      if (expiresInFromUrl) {
+        const expiryTime = Date.now() + Number(expiresInFromUrl) * 1000;
+        localStorage.setItem('spotify_expiry_time', expiryTime.toString());
+      }
+      setAccessToken(tokenFromUrl);
+      
+      // Clean up URL by removing the search params
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams, accessToken]);
+
   // Core state
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(false);
