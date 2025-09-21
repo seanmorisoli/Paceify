@@ -18,7 +18,7 @@ Paceify is a website that creates personalized playlists to exercise to based on
 - **Authentication:** OAuth 2.0 with Spotify
 - **Styling:** Tailwind CSS
 
--- 
+---
 
 ## Authors
 Sean Morisoli, David Lindsey, Ansel Gunther, Kang Shin Young
