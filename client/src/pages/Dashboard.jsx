@@ -389,11 +389,8 @@ const Dashboard = () => {
               </label>
             </div>
           </div>
-
-
-  return (
-    <div>
-      {/* Your full dashboard JSX goes here */}
+        </div>
+      </div>
     </div>
   );
 };
