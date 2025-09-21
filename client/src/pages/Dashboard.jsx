@@ -305,9 +305,9 @@ const Dashboard = () => {
                     }}
                   />
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#333', textAlign: 'center' }}>
+                <div style={{ fontSize: '2 rem', color: '#333', textAlign: 'center' }}>
                   <div>≈ {calculateBPMFromPace(paceMinutes, paceSeconds)} BPM</div>
-                  <div style={{ fontSize: '1.2 rem', alignItems: 'center' }}>
+                  <div style={{ fontSize: '2 rem', alignItems: 'center' }}>
                     ({paceMinutes}:{(paceSeconds || 0).toString().padStart(2, '0')}/mile)
                   </div>
                 </div>
@@ -343,13 +343,13 @@ const Dashboard = () => {
                     }}
                   />
                 </label>
-                <div style={{ fontSize: '0.9rem', color: '#333', textAlign: 'center' }}>
+                <div style={{ fontSize: '2 rem', color: '#333', textAlign: 'center' }}>
                   <div>
                     ≈ {Math.floor(180 / cadence)}:
                     {String(Math.round((180 / cadence - Math.floor(180 / cadence)) * 60)).padStart(2, '0')}
                     /mile
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'black' }}>({cadence} BPM)</div>
+                  <div style={{ fontSize: '0.8 rem', color: 'black' }}>({cadence} BPM)</div>
                 </div>
               </div>
             )}
